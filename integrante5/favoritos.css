@@ -1,0 +1,3 @@
+/* integrante5 · favoritos · apresentação das telas e RNs do módulo. */
+body[data-route="favoritos"] .card>form{max-width:980px}
+body[data-route="favoritos"] .table-wrap{margin-top:16px}

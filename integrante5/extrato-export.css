@@ -1,0 +1,3 @@
+/* integrante5 · extrato-export · apresentação das telas e RNs do módulo. */
+body[data-route="extrato"] .card>form{max-width:980px}
+body[data-route="extrato"] .table-wrap{margin-top:16px}

@@ -1,0 +1,3 @@
+/* integrante4 · fatura · apresentação das telas e RNs do módulo. */
+body[data-route="faturas"] .card>form{max-width:980px}
+body[data-route="faturas"] .table-wrap{margin-top:16px}

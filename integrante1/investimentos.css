@@ -1,0 +1,3 @@
+/* integrante1 · investimentos · apresentação das telas e RNs do módulo. */
+body[data-route="investimentos"] .card>form{max-width:980px}
+body[data-route="investimentos"] .table-wrap{margin-top:16px}

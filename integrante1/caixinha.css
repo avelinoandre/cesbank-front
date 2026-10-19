@@ -1,0 +1,3 @@
+/* integrante1 · caixinha · apresentação das telas e RNs do módulo. */
+body[data-route="caixinha"] .card>form{max-width:980px}
+body[data-route="caixinha"] .table-wrap{margin-top:16px}

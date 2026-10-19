@@ -1,0 +1,3 @@
+/* integrante6 · dados-senha · apresentação das telas e RNs do módulo. */
+body[data-route="dados"] .card>form{max-width:980px}
+body[data-route="dados"] .table-wrap{margin-top:16px}

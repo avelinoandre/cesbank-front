@@ -1,0 +1,3 @@
+/* integrante2 · admin-contas · apresentação das telas e RNs do módulo. */
+body[data-route="admin-contas"] .card>form{max-width:980px}
+body[data-route="admin-contas"] .table-wrap{margin-top:16px}

@@ -1,0 +1,3 @@
+/* integrante4 · contestacao · apresentação das telas e RNs do módulo. */
+body[data-route="contestacoes"] .card>form{max-width:980px}
+body[data-route="contestacoes"] .table-wrap{margin-top:16px}

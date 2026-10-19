@@ -1,0 +1,3 @@
+/* integrante2 · emprestimo · apresentação das telas e RNs do módulo. */
+body[data-route="emprestimo"] .card>form{max-width:980px}
+body[data-route="emprestimo"] .table-wrap{margin-top:16px}
