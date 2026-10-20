@@ -1,3 +1,30 @@
-/* integrante3 · boleto · apresentação das telas e RNs do módulo. */
 body[data-route="boletos"] .card>form{max-width:980px}
 body[data-route="boletos"] .table-wrap{margin-top:16px}
+.i3-split{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+.i3-split>aside .card,.i3-split>div>.card{margin-bottom:20px}
+.i3-split .actions a.button{margin-right:0}
+.i3-rows>div{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:13px 0;border-top:1px solid var(--line)}
+.i3-rows>div:first-child{border-top:0}
+.i3-rows span{color:var(--muted)}
+.i3-rows .total{font-size:16px}
+.i3-rows .total span{color:var(--ink);font-weight:650}
+.i3-sub{margin:0 0 14px}
+.i3-quote{border:1px solid var(--line);background:#fbfaf8;border-radius:8px;padding:14px 16px;color:var(--ink);line-height:1.6;margin-bottom:16px}
+.i3-box{border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:0 0 16px;background:#fff}
+.i3-box p{margin:4px 0 12px;font-size:12px}
+.i3-box.warn{border-color:#efd3b6;background:var(--orange-soft)}
+.i3-box.danger{border-color:#edc7c3;background:var(--red-soft)}
+.i3-radios{border:0;padding:0;margin:0 0 14px}
+.i3-radios legend{font-size:12px;color:#5c5752;margin-bottom:8px;padding:0}
+.i3-radios .check{margin-bottom:8px}
+.i3-big{font-size:46px;font-weight:650;letter-spacing:-1.5px;margin:4px 0 6px}
+.i3-info{background:var(--orange-soft);border:1px solid #efd3b6;color:#85501f;border-radius:9px;padding:14px 18px;margin:18px 0 0;line-height:1.6}
+@media(max-width:1000px){.i3-split{grid-template-columns:1fr}}
+
+.i3-example{border:1px dashed #e0b896;background:#fffaf5;border-radius:10px;padding:16px 18px;margin:0 0 20px}
+.i3-example>strong{display:block;font-size:10px;letter-spacing:1.3px;text-transform:uppercase;color:var(--orange);margin-bottom:8px}
+.i3-example p{margin:6px 0;font-size:12px;line-height:1.6}
+.i3-example code{display:block;background:#fff;border:1px solid var(--line);border-radius:6px;padding:7px 9px;font-size:11px;overflow-wrap:anywhere;margin:6px 0;color:var(--ink)}
+.i3-example .i3-rows>div{padding:8px 0;font-size:12px}
+.i3-example .actions{margin-top:10px}
+.i3-example button{font-size:11px;padding:7px 10px;min-height:32px}

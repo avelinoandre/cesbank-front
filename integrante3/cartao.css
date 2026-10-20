@@ -1,3 +1,20 @@
-/* integrante3 · cartao · apresentação das telas e RNs do módulo. */
 body[data-route="cartoes"] .card>form{max-width:980px}
 body[data-route="cartoes"] .table-wrap{margin-top:16px}
+.i3-card{border-radius:16px;padding:24px 26px;max-width:420px;min-height:200px;display:flex;flex-direction:column;justify-content:space-between;background:linear-gradient(135deg,#fff0e5,#f1c9ab);border:1px solid #e3b99a;color:#5c2a0e;margin-bottom:20px;box-shadow:var(--shadow)}
+.i3-card-top,.i3-card-foot{display:flex;justify-content:space-between;align-items:center;font-weight:650}
+.i3-card-top b{font-size:19px;letter-spacing:-.5px}
+.i3-card-num{font-size:21px;letter-spacing:1.5px;font-weight:600;margin:34px 0 22px;white-space:nowrap}
+.i3-limit>span{color:var(--muted);font-size:12px}
+.i3-limit>div:first-of-type{display:flex;justify-content:space-between;align-items:baseline;margin:6px 0 10px}
+.i3-limit strong{font-size:30px;font-weight:600;letter-spacing:-1px}
+.i3-limit small{color:var(--muted)}
+.i3-bar{height:10px;border-radius:99px;background:#efe9e3;overflow:hidden}
+.i3-bar i{display:block;height:100%;background:var(--orange);border-radius:99px}
+.i3-menu{display:flex;flex-direction:column;gap:0}
+.i3-menu a{display:flex;justify-content:space-between;align-items:center;padding:14px 4px;border-top:1px solid var(--line);color:var(--ink);text-decoration:none;font-weight:600;border-radius:0}
+.i3-menu a:first-child{border-top:0}
+.i3-menu a:after{content:'›';color:var(--muted);font-size:20px;line-height:1}
+.i3-menu a:hover{background:var(--background)}
+.i3-empty{border:1px dashed #d9cdc0;border-radius:var(--radius);background:#fbfaf8;padding:56px 24px;text-align:center}
+.i3-empty strong{display:block;font-size:19px;margin-bottom:6px}
+.i3-empty p{margin:0 0 22px}
