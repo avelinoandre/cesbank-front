@@ -275,49 +275,135 @@
     }
   }));
   function offer(q) {
-    return U.table(['Solicitado', 'Financiado', 'IOF', 'Tarifa', 'Prazo', 'Parcela inicial', 'Total', 'Juros a.m.', 'CET a.m. / a.a.'], [[U.money(q.value), U.money(q.financed), U.money(q.tax), U.money(q.fee), q.months + ' meses', U.money(q.rows[0].value), U.money(q.total), M.percent(q.rateBp), M.percent(q.cet.monthBp) + ' / ' + M.percent(q.cet.yearBp)]]) + `<p class="small">Validade até ${U.e(K.label(q.expires))}. Primeira parcela: ${q.rows[0].due}. A última parcela absorve o ajuste de centavos.</p>`;
+    return '<div class="loan-summary">' + U.table(['Empréstimo', 'Valor'], [
+      ['Valor solicitado', U.money(q.value)], ['Valor financiado', U.money(q.financed)],
+      ['Prazo', q.months + ' meses'], ['Parcela mensal', U.money(q.rows[0].value)],
+      ['Primeiro vencimento', q.rows[0].due]
+    ]) + U.table(['Custo efetivo', 'Valor'], [
+      ['Taxa de juros a.m.', M.percent(q.rateBp)], ['CET a.m. / a.a.', M.percent(q.cet.monthBp) + ' / ' + M.percent(q.cet.yearBp)],
+      ['IOF', U.money(q.tax)], ['Tarifa', U.money(q.fee)], ['Total a pagar', U.money(q.total)]
+    ]) + '</div>' + `<p class="small">Simulação válida até ${U.e(K.label(q.expires))}. A última parcela absorve o ajuste de centavos.</p>`;
   }
-  C.Router.register('emprestimo', 'Empréstimo', s => U.page('Simule seu empréstimo', 'Compare a parcela, o custo efetivo e o cronograma antes de solicitar análise.', U.balance(s) + U.card('Nova simulação', U.form('<div class="fields">' + U.field('value', 'Valor solicitado', '3000.00') + U.field('months', 'Prazo em meses', '12', 'number') + '</div>', d => {
-    const q = C.Db.transaction(x => {
-      const v = simulate(x, M.parse(d.value), Number(d.months));
-      x.proposals.push(v);
-      return v;
-    });
-    U.done('Simulação calculada. Revise os valores antes da análise.');
-    U.modal('Simulação de empréstimo', offer(q) + U.action('Submeter proposta à análise', () => {
-      const c = C.Db.transaction(x => analysis(x, q.id));
-      U.close();
-      C.Router.go('contratos?id=' + c.id);
-      U.render();
-      U.flash(c.status === 'RECUSADO' ? c.code + ' · ' + c.reason : 'Proposta aprovada' + (c.reduced ? ' com valor reduzido. Revise a nova oferta.' : '. Aguarda seu aceite.'), c.status === 'RECUSADO' ? 'error' : 'success');
-    }));
-  }, 'Calcular simulação')) + U.card('Simulações recentes', U.table(['Data', 'Valor', 'Prazo', 'Validade', 'Ações'], s.proposals.filter(q => q.client === s.session.client).map(q => [U.e(K.label(q.at)), U.money(q.value), q.months + ' meses', U.e(K.label(q.expires)), U.action('Consultar simulação', () => U.modal('Simulação', offer(q) + (!q.submitted ? U.action('Submeter análise', () => {
-    C.Db.transaction(x => analysis(x, q.id));
+  function schedule(rows) {
+    return U.table(['Nº', 'Vencimento', 'Parcela', 'Juros', 'Amortização', 'Saldo principal', 'Situação'], rows.map(r => [r.number, r.due, U.money(r.value), U.money(r.interest), U.money(r.amort), U.money(r.balance), U.badge(r.status)]));
+  }
+  function sendProposal(id) {
+    const c = C.Db.transaction(x => analysis(x, id));
     U.close();
-    C.Router.go('contratos');
-    U.render();
-  }) : '')), 'secondary')]))), 'F9 · RN1–RN7'), 'Cadastro e crédito');
-  C.Router.register('contratos', 'Meus contratos', s => U.page('Meus contratos', 'Acompanhe as parcelas, os atrasos e o desconto por quitação antecipada.', U.balance(s) + s.contracts.filter(c => c.client === s.session.client).map(c => U.card('Contrato ' + c.id, U.badge(c.status) + `<p>${U.e(c.reason || c.history.at(-1)?.detail || '')}</p>` + offer(c.offer) + (c.status === 'APROVADO' ? U.form(U.select('account', 'Conta própria para liberação', s.accounts.filter(a => a.client === s.session.client && a.status === 'ATIVA').map(a => [a.id, a.branch + ' / ' + a.number])), d => {
-    C.Db.transaction(x => accept(x, c.id, d.account));
-    U.done('Crédito liberado em conta; cronograma e débito automático ativados.');
-  }, 'Aceitar e contratar') + U.action('Cancelar proposta aprovada', () => {
-    C.Db.transaction(x => {
-      const q = x.contracts.find(v => v.id === c.id && v.client === x.session.client);
-      C.assert(q, 'Contrato não encontrado.');
-      C.S.transition(x, q, 'contract', 'CANCELADO', 'Cancelado pelo cliente antes da liberação.');
-    });
-    U.done('Proposta cancelada.');
-  }, 'danger') : '') + (c.rows.length ? U.table(['Nº', 'Vencimento', 'Parcela', 'Juros', 'Amortização', 'Saldo principal', 'Situação / pagamento'], c.rows.map(r => [r.number, r.due, U.money(r.value), U.money(r.interest), U.money(r.amort), U.money(r.balance), U.badge(r.status) + (r.status !== 'PAGA' ? U.action(r.due > K.day(s.now) ? 'Antecipar parcela' : 'Pagar parcela', () => {
-    C.Db.transaction(x => {
-      C.Session.requireClient(x);
-      payInstallment(x, c.id, r.number, r.due > K.day(x.now));
-    });
-    U.done('Pagamento de parcela processado.');
-  }, 'secondary') : '')])) : '') + (['ATIVO', 'EM_ATRASO'].includes(c.status) ? (() => {
-    const q = debt(s, c);
-    return `<p>Quitação hoje: <strong>${U.money(q.total)}</strong> · principal ${U.money(q.principal)}, juros incorridos ${U.money(q.interest)}, multa/mora ${U.money(q.penalty)}. Redução de juros futuros: ${U.money(Math.max(0, q.contractual - q.total))}.</p>` + U.form(U.select('mode', 'Tipo de liquidação', [['TOTAL', 'Quitação total'], ['PARCIAL', 'Amortização parcial']]) + U.field('value', 'Valor para liquidação parcial', '100.00') + U.select('strategy', 'Na liquidação parcial', [['PARCELA', 'Reduzir parcelas'], ['PRAZO', 'Reduzir prazo']]), d => U.modal('Confirmar liquidação antecipada', `<p>Valor atualizado para quitação total: ${U.money(debt(C.Db.get(), C.Db.get().contracts.find(v => v.id === c.id)).total)}. Confira o saldo antes de confirmar.</p>` + U.action('Confirmar liquidação', () => {
-      C.Db.transaction(x => settle(x, c.id, d));
-      U.done('Liquidação processada com redução proporcional dos juros futuros.');
-    })), 'Revisar liquidação');
-  })() : '') + U.history(c) + U.json(c.analysis))).join('') + (!s.contracts.some(c => c.client === s.session.client) ? '<div class="empty">Você ainda não possui contratos.</div>' : ''), 'F9 · RN5–RN12'), 'Cadastro e crédito');
+    C.Router.go('contratos?id=' + c.id);
+  }
+  function simulation(q, s) {
+    const expired = q.expires <= s.now;
+    return U.card('Resultado da simulação', offer(q) + '<p>Parcelas pelo sistema de amortização francês (Price). O CET incorpora juros, tributos e tarifas.</p>' + (expired ? '<div class="banner error">PropostaExpirada · Faça uma nova simulação.</div>' : '') + '<div class="actions">' + (!q.submitted && !expired ? U.action('Enviar proposta para análise', () => sendProposal(q.id)) : '') + U.action('Ver parcelas', () => U.modal('Cronograma da simulação', schedule(q.rows)), 'secondary') + U.link('emprestimo', 'Nova simulação') + '</div>');
+  }
+  C.Router.register('emprestimo', 'Empréstimo', (s, p) => {
+    const q = s.proposals.find(q => q.id === p.get('id') && q.client === s.session.client);
+    const u = A.client(s, s.session.client);
+    return U.page('Contratar empréstimo', 'Simule, revise os custos e envie sua proposta para análise.', '<div class="grid">' + U.card('Simule seu empréstimo', U.form(U.field('value', 'Valor desejado (R$)', q ? M.decimal(q.value) : '3000.00') + U.field('months', 'Prazo em meses', q?.months || '12', 'number', 'min="2" max="60" step="1"') + '<p>Primeiro vencimento em 30 dias.</p>', d => {
+      const result = C.Db.transaction(x => {
+        const proposal = simulate(x, M.parse(d.value), Number(d.months));
+        x.proposals.push(proposal);
+        return proposal;
+      });
+      C.Router.go('emprestimo?id=' + result.id);
+    }, 'Simular')) + U.card('Condições da modalidade', U.table(['Condição', 'Valor'], [
+      ['Valor permitido', U.money(C.policy.loanMin) + ' a ' + U.money(C.policy.loanMax)],
+      ['Prazo', C.policy.loanMinMonths + ' a ' + C.policy.loanMaxMonths + ' meses'],
+      ['Taxa da sua faixa a.m.', M.percent({ALTA:200,MEDIA:250,BASICA:300}[u.qualification])],
+      ['Comprometimento de renda', U.money(existingCommitment(s, u.id)) + ' de ' + U.money(M.mul(u.income, C.policy.incomeBp))],
+      ['Validade da simulação', C.policy.proposalMinutes + ' minutos']
+    ])) + '</div>' + (q ? simulation(q, s) : '') + U.card('Simulações recentes', U.table(['Data', 'Valor', 'Prazo', 'Situação', 'Acesso'], s.proposals.filter(q => q.client === s.session.client).slice().reverse().map(q => [U.e(K.label(q.at)), U.money(q.value), q.months + ' meses', q.submitted ? 'Enviada' : q.expires <= s.now ? 'Expirada' : 'Válida', U.link('emprestimo?id=' + q.id, 'Consultar simulação')]))), 'F9 · RN1–RN7');
+  }, 'Cadastro e crédito');
+  function currentContract(s, id) {
+    const c = s.contracts.find(c => c.id === id && c.client === s.session.client);
+    C.assert(c, 'Contrato não encontrado para este cliente.');
+    return c;
+  }
+  // Preview runs the same calculation on an isolated copy; no balance is changed.
+  function previewPayment(id, d) {
+    const state = C.Db.get(), c = currentContract(state, id);
+    C.assert(c.account === state.session.account, 'Selecione a conta vinculada ao contrato.');
+    const copy = C.Db.clone(state), original = debt(state, c);
+    const tx = settle(copy, id, d);
+    C.assert(tx.status === 'EFETIVADA', 'Não foi possível simular a liquidação.');
+    const after = currentContract(copy, id), pending = after.rows.filter(r => r.status !== 'PAGA');
+    const value = d.mode === 'TOTAL' ? original.total : M.parse(d.value);
+    U.modal('Confirmar quitação antecipada', U.table(['Simulação da quitação', 'Valor'], [
+      ['Principal', U.money(original.principal)], ['Juros incorridos', U.money(original.interest)],
+      ['Multa e mora', U.money(original.penalty)], ['Valor a pagar hoje', U.money(value)],
+      ['Saldo devedor após pagamento', U.money(Math.max(0, original.total - value))],
+      ['Estratégia', d.mode === 'TOTAL' ? 'Quitação total' : d.strategy === 'PRAZO' ? 'Reduzir prazo' : 'Reduzir parcelas'],
+      ['Parcelas restantes', d.mode === 'TOTAL' ? 0 : pending.length],
+      ['Nova parcela', d.mode === 'TOTAL' ? U.money(0) : U.money(pending[0].value)]
+    ]) + '<p>Juros futuros retirados do saldo para recálculo: ' + U.money(Math.max(0, original.contractual - original.total)) + '.</p>' + U.action('Confirmar quitação', () => {
+      C.Db.transaction(x => {
+        C.assert(x.now === state.now && JSON.stringify(currentContract(x, id)) === JSON.stringify(c), 'Os valores mudaram. Calcule novamente antes de confirmar.');
+        const result = settle(x, id, d);
+        C.assert(result.status === 'EFETIVADA', 'Liquidação não efetivada.');
+      });
+      U.done('Quitação efetivada. Cronograma e situação atualizados.');
+    }));
+  }
+  function previewInstallments(id, count) {
+    const state = C.Db.get(), c = currentContract(state, id);
+    const pending = c.rows.filter(r => r.status !== 'PAGA');
+    C.assert(Number.isInteger(count) && count > 0 && count <= pending.length, 'Informe uma quantidade inteira entre 1 e ' + pending.length + '.');
+    const selected = pending.slice(0, count), copy = C.Db.clone(state);
+    for (const row of selected) C.assert(payInstallment(copy, id, row.number, true).status === 'EFETIVADA', 'Antecipação não efetivada.');
+    const after = currentContract(copy, id);
+    const total = selected.reduce((sum, r) => sum + after.rows.find(v => v.number === r.number).paid, 0);
+    const original = selected.reduce((sum, r) => sum + r.value, 0);
+    U.modal('Confirmar antecipação de parcelas', U.table(['Simulação da antecipação', 'Valor'], [
+      ['Parcelas selecionadas', selected.map(r => r.number).join(', ')],
+      ['Valor a pagar hoje', U.money(total)], ['Economia de juros', U.money(Math.max(0, original - total))]
+    ]) + U.action('Confirmar antecipação de ' + count + ' parcelas', () => {
+      C.Db.transaction(x => {
+        C.Session.requireClient(x);
+        C.assert(x.now === state.now && JSON.stringify(currentContract(x, id)) === JSON.stringify(c), 'Os valores mudaram. Calcule novamente.');
+        for (const row of selected) C.assert(payInstallment(x, id, row.number, true).status === 'EFETIVADA', 'Antecipação não efetivada.');
+      });
+      U.done('Parcelas antecipadas com redução de juros. Cronograma atualizado.');
+    }));
+  }
+  function settlementDialog(c) {
+    U.modal('Quitação antecipada', U.form(U.select('mode', 'Tipo de quitação', [['TOTAL','Quitação total'],['PARCIAL','Quitação parcial por valor'],['PARCELAS','Adiantar parcelas específicas']]) + U.field('value', 'Valor a antecipar (somente parcial)', '100.00') + U.field('count', 'Quantidade de parcelas a antecipar (modo parcelas específicas)', '1', 'number', 'min="1" step="1"') + U.select('strategy', 'Na quitação parcial', [['PARCELA','Reduzir valor das parcelas'],['PRAZO','Reduzir prazo restante']]), d => d.mode === 'PARCELAS' ? previewInstallments(c.id, Number(d.count)) : previewPayment(c.id, d), 'Calcular') + '<p>Para antecipar parcelas específicas, use as ações do cronograma. Nenhum débito ocorre antes da confirmação.</p>');
+  }
+  function installmentDialog(id, number) {
+    const state = C.Db.get(), c = currentContract(state, id), row = c.rows.find(r => r.number === number);
+    const early = row.due > K.day(state.now), copy = C.Db.clone(state);
+    const tx = payInstallment(copy, id, number, early);
+    C.assert(tx.status === 'EFETIVADA', 'Não foi possível simular o pagamento.');
+    const paid = currentContract(copy, id).rows.find(r => r.number === number).paid;
+    U.modal(early ? 'Antecipar parcela' : 'Pagar parcela', U.table(['Parcela ' + number, 'Valor'], [['Vencimento', row.due], ['Valor original', U.money(row.value)], ['Valor a pagar hoje', U.money(paid)], ['Redução de juros', U.money(Math.max(0, row.value - paid))]]) + U.action('Confirmar pagamento', () => {
+      C.Db.transaction(x => {
+        C.Session.requireClient(x);
+        C.assert(x.now === state.now && JSON.stringify(currentContract(x, id)) === JSON.stringify(c), 'Os valores mudaram. Revise novamente.');
+        const result = payInstallment(x, id, number, early);
+        C.assert(result.status === 'EFETIVADA', 'Pagamento não efetivado.');
+      });
+      U.done('Parcela paga. Cronograma atualizado.');
+    }));
+  }
+  C.Router.register('contratos', 'Meus contratos', (s, p) => {
+    const own = s.contracts.filter(c => c.client === s.session.client);
+    if (!p.get('id')) return U.page('Meus contratos', 'Selecione um contrato para acompanhar as parcelas.', U.link('emprestimo', 'Novo empréstimo') + U.card('Contratos', U.table(['Contrato', 'Valor', 'Prazo', 'Situação', 'Acesso'], own.map(c => [U.e(c.id), U.money(c.offer.value), c.offer.months + ' meses', U.badge(c.status), U.link('contratos?id=' + c.id, 'Ver contrato')]))), 'F9 · RN12');
+    const c = currentContract(s, p.get('id'));
+    let body = U.link('contratos', 'Voltar aos contratos') + U.card(c.status === 'RECUSADO' ? 'Proposta recusada' : 'Resumo do contrato', U.badge(c.status) + '<p>' + U.e(c.code ? c.code + ' · ' + c.reason : c.history.at(-1)?.detail || c.reason) + '</p>' + offer(c.offer));
+    if (c.status === 'RECUSADO' || c.status === 'CANCELADO') body += U.link('emprestimo', 'Nova simulação');
+    if (c.status === 'APROVADO') body += U.card(c.reduced ? 'Oferta aprovada com valor reduzido' : 'Proposta aprovada', '<p>Confira os custos e escolha sua conta antes de aceitar. O crédito será liberado após a confirmação.</p>' + (c.offer.expires <= s.now ? '<div class="banner error">PropostaExpirada · Faça uma nova simulação.</div>' + U.link('emprestimo','Nova simulação') : U.form(U.select('account', 'Conta própria para liberação', s.accounts.filter(a => a.client === s.session.client && a.status === 'ATIVA').map(a => [a.id,a.branch + ' / ' + a.number])), d => {
+      C.Db.transaction(x => accept(x,c.id,d.account));
+      U.done('Crédito liberado em conta; cronograma e débito automático ativados.');
+    }, 'Aceitar e contratar')) + U.action('Cancelar proposta', () => {
+      C.Db.transaction(x => C.S.transition(x, currentContract(x,c.id), 'contract','CANCELADO','Cancelado pelo cliente antes da liberação.'));
+      U.done('Proposta cancelada.');
+    }, 'danger'));
+    if (c.rows.length) {
+      const a = s.accounts.find(a => a.id === c.account);
+      const active = ['ATIVO','EM_ATRASO'].includes(c.status);
+      body += U.card('Conta vinculada e pagamentos', '<p>Agência ' + U.e(a.branch) + ' · conta ' + U.e(a.number) + ' · saldo disponível ' + U.money(A.balance(s,a.id).available) + '</p><p>Débito automático na data de vencimento. Sem saldo, a parcela fica em atraso e acumula multa e mora.</p>' + (active ? U.action('Quitar antecipadamente', () => settlementDialog(c)) : ''));
+      body += U.card('Cronograma de parcelas', schedule(c.rows) + (active ? '<div class="actions">' + c.rows.filter(r => r.status !== 'PAGA').map(r => U.action((r.due > K.day(s.now) ? 'Antecipar' : 'Pagar') + ' parcela ' + r.number, () => installmentDialog(c.id,r.number),'secondary')).join('') + '</div>' : ''));
+    }
+    body += U.card('Histórico de situações', U.history(c));
+    return U.page('Contrato ' + c.id, 'Acompanhe a liberação, os vencimentos e as quitações.', body, 'F9 · RN5–RN12');
+  }, 'Cadastro e crédito');
 })(Cesbank);

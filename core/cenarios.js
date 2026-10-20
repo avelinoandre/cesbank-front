@@ -381,7 +381,7 @@
         }
       }
       if (feature === 'F5') {
-        const step = n <= 4 ? 1 : n === 5 ? 2 : n === 6 ? 3 : n === 7 ? 4 : 5;
+        const step = n <= 4 ? 1 : n === 5 ? 2 : n === 6 ? 2 : n === 7 ? 4 : n === 8 || n === 11 ? 3 : 5;
         const r = registration(s, step);
         route = 'abrir-conta?id=' + r.id;
         const notes = {
@@ -510,17 +510,17 @@
           const q = C.S.loans.simulate(s, 100000, 12);
           q.expires = s.now;
           s.proposals.push(q);
-          instruction = 'Simulação preparada e expirada. Consulte-a na lista e solicite análise: PropostaExpirada.';
+          instruction = 'Simulação preparada e expirada. Consulte-a na lista: PropostaExpirada; use Nova simulação para continuar.';
         }
         if (n === 8) {
           const q = C.S.loans.simulate(s, 100000, 12);
           s.proposals.push(q);
-          C.S.loans.analysis(s, q.id);
-          route = 'contratos';
+          const c = C.S.loans.analysis(s, q.id);
+          route = 'contratos?id=' + c.id;
         }
         if (n >= 9) {
           const c = loan(s);
-          route = 'contratos';
+          route = 'contratos?id=' + c.id;
           if (n === 10) {
             a.total = 0;
             s.demo.advanceTo = K.at(c.rows[0].due, 10);

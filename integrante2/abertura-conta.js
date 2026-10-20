@@ -201,20 +201,29 @@
       const q = C.Db.transaction(x => newDraft(x));
       C.Router.go('abrir-conta?id=' + q.id);
     })) + U.card('Solicitações existentes', U.table(['Protocolo', 'Situação', 'Motivo', 'Acesso'], s.registrations.map(q => [U.e(q.id), U.badge(q.status), U.e(q.reason || 'Em preenchimento'), U.link('abrir-conta?id=' + q.id, 'Consultar')]))), 'F5 · RN1–RN12');
-    if (r.status !== 'RASCUNHO') return U.page('Resultado do cadastro', r.reason, U.card(r.status, U.badge(r.status) + `<p>${U.e(r.criterion || 'Conta criada automaticamente com saldo inicial zero.')}</p>` + (r.account ? U.action('Acessar minha nova conta', () => {
+    if (r.status !== 'RASCUNHO') return U.page(r.status === 'APROVADO' ? 'Conta criada com sucesso' : 'Cadastro recusado', r.reason, U.card(r.status, U.badge(r.status) + `<p>${U.e(r.criterion || 'Conta criada automaticamente com saldo inicial zero.')}</p>` + (r.account ? U.action('Acessar minha nova conta', () => {
       C.Session.select(r.client);
       C.Router.go('inicio');
       U.render();
-    }) : U.link('abrir-conta', 'Criar nova solicitação')) + U.json(r)), 'F5 · RN9–RN12');
+    }) + U.table(['Conta e limites iniciais', 'Valor'], (() => { const a = s.accounts.find(a => a.id === r.account); return [['Agência / conta', U.e(a.branch + ' / ' + a.number)], ['Saldo inicial', U.money(0)], ...Object.entries(a.limits).map(([k,v]) => [{daily:'Diário',night:'Noturno',per:'Por transação',withdraw:'Saque'}[k], U.money(v)])]; })()) : U.link('abrir-conta', 'Criar nova solicitação')) + U.json(r)), 'F5 · RN9–RN12');
     const d = r.data,
       step = r.step;
     let body = '';
     if (step === 1) body = U.field('cpf', 'CPF sem pontuação', d.cpf) + U.field('birth', 'Data de nascimento', d.birth, 'date') + U.field('name', 'Nome civil', d.name, 'text', 'maxlength="70"') + U.field('social', 'Nome social opcional', d.social, 'text', 'maxlength="70"');
     if (step === 2) body = U.field('street', 'Logradouro', d.street) + U.field('district', 'Bairro', d.district) + U.field('city', 'Município', d.city) + U.select('uf', 'UF', ufs, d.uf) + U.field('cep', 'CEP sem pontuação', d.cep) + U.field('ibge', 'Código IBGE do município', d.ibge) + `<p class="small">Tabela de consulta fictícia: ${cities.map(c => `${c.cep} · ${c.city}/${c.uf} · ${c.code}`).join('; ')}.</p>`;
-    if (step === 3) body = U.field('email', 'E-mail principal', d.email) + U.checkbox('emailPrincipal', 'Marcar e-mail como principal', !!d.emailPrincipal) + U.field('phone', 'Telefone principal internacional', d.phone) + U.checkbox('phonePrincipal', 'Marcar telefone como principal', !!d.phonePrincipal) + U.select('phoneType', 'Classificação', ['FIXO', 'MOVEL', 'OUTRO'], d.phoneType) + U.field('ddd', 'DDD (2 ou 3 dígitos)', d.ddd) + U.field('email2', 'Outro e-mail opcional', d.email2) + U.field('phone2', 'Outro telefone opcional', d.phone2);
+    if (step === 2) body += U.field('email', 'E-mail principal', d.email) + U.checkbox('emailPrincipal', 'Marcar e-mail como principal', !!d.emailPrincipal) + U.field('phone', 'Telefone principal internacional', d.phone) + U.checkbox('phonePrincipal', 'Marcar telefone como principal', !!d.phonePrincipal) + U.select('phoneType', 'Classificação', ['FIXO', 'MOVEL', 'OUTRO'], d.phoneType) + U.field('ddd', 'DDD (2 ou 3 dígitos)', d.ddd) + U.field('email2', 'Outro e-mail opcional', d.email2) + U.field('phone2', 'Outro telefone opcional', d.phone2);
     if (step === 4) body = U.field('identityFile', 'Documento de identidade fictício', '', 'file') + U.field('addressFile', 'Comprovante de endereço fictício', '', 'file') + (d.identityFile ? `<p>Arquivo atual: ${U.e(d.identityFile.name)}</p>` : '') + U.field('documentNumber', 'Número do documento', d.documentNumber || '') + U.field('documentCpf', 'CPF vinculado ao documento', d.documentCpf || d.cpf) + U.field('expiry', 'Validade do documento', d.expiry || K.addDays(K.day(s.now), 365), 'date') + U.checkbox('documentVerified', 'A conferência simulada confirmou a compatibilidade entre documento, CPF e titular.', !!d.documentVerified);
-    if (step === 5) body = U.select('occupation', 'Ocupação', occupations, d.occupation) + U.field('income', 'Renda declarada', d.income || '5000.00') + U.select('periodicity', 'Periodicidade', periods, d.periodicity || 'MENSAL') + U.field('reference', 'Data de referência', d.reference || K.day(s.now), 'date') + U.select('type', 'Tipo de conta', ['CONTA_DEPOSITO_A_VISTA', 'CONTA_POUPANCA', 'CONTA_PAGAMENTO_PRE_PAGA'], d.type) + U.select('subtype', 'Subtipo', ['INDIVIDUAL', 'CONJUNTA_SIMPLES', 'CONJUNTA_SOLIDARIA'], d.subtype) + U.checkbox('terms', 'Aceito os termos de uso e a política de privacidade · versão 2026.02.', !!d.terms) + U.checkbox('blocked', 'Demonstração: simular restrição cadastral para testar recusa.', r.blocked);
-    return U.page('Abrir conta · etapa ' + step + ' de 5', ['', 'Identificação', 'Endereço', 'Contatos', 'Documentos', 'Qualificação e consentimento'][step], `<div class="steps">${['Identificação', 'Endereço', 'Contatos', 'Documentos', 'Revisão'].map((t, i) => `<span class="${i + 1 === step ? 'current' : ''}">${i + 1}. ${t}</span>`).join('')}</div>` + U.card('Preencha os dados da etapa', U.form(body, (data, el) => {
+    if (step === 3) body = U.select('occupation', 'Ocupação', occupations, d.occupation) + U.field('income', 'Renda declarada', d.income || '5000.00') + U.select('periodicity', 'Periodicidade', periods, d.periodicity || 'MENSAL') + U.field('reference', 'Data de referência', d.reference || K.day(s.now), 'date') + U.select('type', 'Tipo de conta', ['CONTA_DEPOSITO_A_VISTA', 'CONTA_POUPANCA', 'CONTA_PAGAMENTO_PRE_PAGA'], d.type) + U.select('subtype', 'Subtipo', ['INDIVIDUAL', 'CONJUNTA_SIMPLES', 'CONJUNTA_SOLIDARIA'], d.subtype);
+    if (step === 5) body = U.table(['Confira seus dados', 'Informação'], [
+      ['Nome exibido', U.e(d.social || d.name)], ['Nome civil', U.e(d.name)],
+      ['CPF / nascimento', U.e(d.cpf + ' / ' + d.birth)],
+      ['Endereço', U.e(d.street + ', ' + d.district + ' · ' + d.city + '/' + d.uf + ' · CEP ' + d.cep + ' · IBGE ' + d.ibge)],
+      ['Contatos principais', U.e(d.email + ' · ' + d.phone)],
+      ['Ocupação e renda', U.e(d.occupation) + ' · ' + U.money(M.parse(d.income)) + ' · ' + U.e(d.periodicity) + ' · ref. ' + U.e(d.reference)],
+      ['Conta', U.e(d.type + ' · ' + d.subtype)],
+      ['Documentos', U.e(d.identityFile?.name + ' · ' + d.addressFile?.name)]
+    ]) + U.checkbox('terms', 'Li e aceito os termos de uso e a política de privacidade · versão 2026.02.', !!d.terms) + '<p>O aceite registra versão, data, hora e origem da solicitação.</p><details><summary>Ferramentas de demonstração</summary>' + U.checkbox('blocked', 'Simular restrição cadastral para testar recusa.', r.blocked) + '</details>';
+    return U.page('Abrir conta · etapa ' + step + ' de 5', ['', 'Dados pessoais', 'Endereço e contatos', 'Qualificação e conta', 'Documentos', 'Termos e envio'][step], `<div class="steps">${['Dados pessoais', 'Endereço e contatos', 'Qualificação e conta', 'Documentos', 'Termos e envio'].map((t, i) => `<span class="${i + 1 === step ? 'current' : ''}">${i + 1}. ${t}</span>`).join('')}</div>` + U.card('Preencha os dados da etapa', U.form(body, (data, el) => {
       let result;
       C.Db.transaction(x => {
         const q = x.registrations.find(v => v.id === r.id);
@@ -223,7 +232,7 @@
           ...q.data,
           ...data
         };
-        if (step === 3) {
+        if (step === 2) {
           combined.emailPrincipal = data.emailPrincipal;
           combined.phonePrincipal = data.phonePrincipal;
         }
@@ -239,7 +248,9 @@
           combined.documentVerified = data.documentVerified;
         }
         if (step === 5) combined.terms = data.terms;
-        validate(x, combined, step);
+        if (step === 2) { validate(x, combined, 2); validate(x, combined, 3); }
+        else if (step === 3) validate(x, { ...combined, terms: true }, 5);
+        else validate(x, combined, step);
         q.data = combined;
         if (step < 5) q.step++;else {
           q.blocked = !!data.blocked;
@@ -248,7 +259,7 @@
       });
       U.render();
       if (result) U.flash(result.status === 'APROVADO' ? 'Cadastro aprovado; conta e limites iniciais criados.' : 'Cadastro recusado: ' + result.reason, result.status === 'APROVADO' ? 'success' : 'error');
-    }, step === 5 ? 'Submeter cadastro' : 'Salvar e continuar') + (step > 1 ? U.action('Voltar à etapa anterior', () => {
+    }, step === 5 ? 'Enviar cadastro para análise' : 'Continuar') + (step > 1 ? U.action('Voltar à etapa anterior', () => {
       C.Db.transaction(x => {
         const q = x.registrations.find(v => v.id === r.id);
         C.assert(q.status === 'RASCUNHO', 'Cadastro imutável.');
