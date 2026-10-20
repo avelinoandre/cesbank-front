@@ -265,8 +265,23 @@
       }
     });
   });
+  /* ---- Apresentação (integrante 4): status coloridos e linha do tempo da ocorrência ---- */
+  const STATUS = {
+    ABERTA: 'aberta', EM_ANALISE: 'analise', PROCEDENTE: 'paga', IMPROCEDENTE: 'atraso', ENCERRADA: 'encerrada'
+  };
+  function sBadge(v) {
+    return `<span class="i4-badge st-${STATUS[v] || 'neutro'}">${U.e(String(v).replace(/_/g, ' '))}</span>`;
+  }
+  function tracker(q) {
+    const decided = ['PROCEDENTE', 'IMPROCEDENTE'].includes(q.status) ? q.status : (q.history || []).map(h => h.to).find(t => t === 'PROCEDENTE' || t === 'IMPROCEDENTE');
+    const steps = [['ABERTA', 'Aberta'], ['EM_ANALISE', 'Em análise'], [decided || 'DECISAO', decided ? (decided === 'PROCEDENTE' ? 'Procedente' : 'Improcedente') : 'Decisão'], ['ENCERRADA', 'Encerrada']];
+    const order = { ABERTA: 0, EM_ANALISE: 1, PROCEDENTE: 2, IMPROCEDENTE: 2, ENCERRADA: 3 };
+    const at = order[q.status] ?? 0;
+    return '<ol class="i4-track" aria-label="Andamento da ocorrência">' + steps.map(([key, label], i) => `<li class="${i < at ? 'done' : i === at ? 'now' : ''} ${key === 'IMPROCEDENTE' ? 'neg' : ''}"><span>${i + 1}</span>${label}</li>`).join('') + '</ol>';
+  }
   function record(q) {
-    return U.table(['Protocolo', 'Situação', 'Abertura', 'Resposta até', 'Valor', 'Motivo'], [[U.e(q.id), U.badge(q.status), U.e(K.label(q.at)), q.deadline, U.money(q.value), U.e(q.description)]]) + U.history(q) + (q.returnValue ? `<p>Devolução ${U.money(q.returnValue)} · ${U.e(q.reason)} · solicitada ${U.e(K.label(q.returnRequested))} · efetivar até ${U.e(K.label(q.returnDue))}.</p>` : '') + (q.returnTransaction ? U.link('comprovante?id=' + q.returnTransaction, 'Comprovante da devolução') : '') + (q.refundFailure ? U.json(q.refundFailure) : '');
+    const hist = q.history || [];
+    return tracker(q) + U.table(['Protocolo', 'Situação', 'Abertura', 'Resposta até', 'Valor', 'Motivo'], [[`<b>${U.e(q.id)}</b>`, sBadge(q.status), U.e(K.label(q.at)), q.deadline, `<b>${U.money(q.value)}</b>`, U.e(q.description)]]) + (q.returnValue ? `<div class="banner success">Devolução ${U.money(q.returnValue)} · ${U.e(q.reason)} · solicitada ${U.e(K.label(q.returnRequested))} · efetivar até ${U.e(K.label(q.returnDue))}.</div>` : '') + (q.returnTransaction ? U.link('comprovante?id=' + q.returnTransaction, 'Comprovante da devolução') : '') + (q.refundFailure ? '<div class="banner error">Devolução pendente: ' + U.e(q.refundFailure.detail) + '</div>' + U.json(q.refundFailure) : '') + `<details class="i4-history"><summary>Histórico da ocorrência (${hist.length})</summary>` + U.table(['Data e hora', 'Situação', 'Responsável', 'Detalhe'], hist.map(h => [U.e(K.label(h.at)), sBadge(h.to), U.e(h.actor), U.e(h.detail)])) + '</details>';
   }
   C.Router.register('contestacoes', 'Contestações', (s, p) => {
     const transactions = s.transactions.filter(t => t.from === s.session.account && t.status === 'EFETIVADA');
@@ -274,16 +289,12 @@
       invoice: f,
       item: i
     })));
-    return U.page('Contestações e devoluções', 'Prazo para abertura: 80 dias. Análise em 10 dias úteis, com uma prorrogação justificada.', U.card('Abrir contestação de transação', U.form(U.select('transaction', 'Transação', transactions.map(t => [t.id, t.description + ' · ' + U.money(t.value) + ' · ' + K.day(t.at)])) + '<label>Motivo<textarea name="description"></textarea></label>' + U.checkbox('fraud', 'Há indício de fraude: solicitar bloqueio cautelar do valor no destinatário.'), d => {
-      const q = C.Db.transaction(x => open(x, {
-        ...d,
-        kind: 'CONTA'
-      }));
-      U.done('Contestação aberta. Protocolo ' + q.id + '.');
-    }, 'Abrir ocorrência')) + U.card('Contestar lançamento do cartão', U.form(U.select('reference', 'Lançamento de fatura', invoiceItems.map(({
+    const fromInvoice = p.get('fatura') && p.get('item');
+    const mine = s.disputes.filter(q => q.client === s.session.client);
+    const cardForm = U.card('Contestar lançamento do cartão', (fromInvoice ? '<div class="banner warning">Lançamento selecionado a partir da fatura. Descreva o motivo e confirme.</div>' : '') + U.form(U.select('reference', 'Lançamento de fatura', invoiceItems.map(({
       invoice: f,
       item: i
-    }) => [f.id + '|' + i.id, `${f.cycle} · ${i.description} · ${U.money(i.amount)}`]), (p.get('fatura') || '') + '|' + (p.get('item') || '')) + '<label>Motivo<textarea name="description"></textarea></label>', d => {
+    }) => [f.id + '|' + i.id, `${f.cycle} · ${i.description} · ${U.money(i.amount)}`]), (p.get('fatura') || '') + '|' + (p.get('item') || '')) + '<label>Motivo<textarea name="description" placeholder="Ex.: não reconheço esta compra"></textarea></label>', d => {
       const [invoice, item] = d.reference.split('|');
       const q = C.Db.transaction(x => open(x, {
         kind: 'CARTAO',
@@ -292,25 +303,33 @@
         description: d.description
       }));
       U.done('Protocolo ' + q.id + '. Cobrança suspensa até a decisão.');
-    }, 'Contestar e suspender cobrança')) + U.card('Minhas ocorrências', s.disputes.filter(q => q.client === s.session.client).map(q => record(q)).join('') || '<div class="empty">Nenhuma contestação aberta.</div>') + U.link('atendimento', 'Área de atendimento · analista'), 'F12 · RN1–RN5, RN11, RN12');
+    }, 'Contestar e suspender cobrança'), 'i4-form-card' + (fromInvoice ? ' i4-focus' : ''));
+    const accountForm = U.card('Abrir contestação de transação', U.form(U.select('transaction', 'Transação', transactions.map(t => [t.id, t.description + ' · ' + U.money(t.value) + ' · ' + K.day(t.at)])) + '<label>Motivo<textarea name="description" placeholder="Ex.: transferência não reconhecida"></textarea></label>' + U.checkbox('fraud', 'Há indício de fraude: solicitar bloqueio cautelar do valor no destinatário.'), d => {
+      const q = C.Db.transaction(x => open(x, {
+        ...d,
+        kind: 'CONTA'
+      }));
+      U.done('Contestação aberta. Protocolo ' + q.id + '.');
+    }, 'Abrir ocorrência'), 'i4-form-card');
+    return U.page('Contestações e devoluções', 'Prazo para abertura: 80 dias. Análise em 10 dias úteis, com uma prorrogação justificada.', (fromInvoice ? cardForm + accountForm : accountForm + cardForm) + U.card('Minhas ocorrências (' + mine.length + ')', mine.map(q => `<div class="i4-record">${record(q)}</div>`).join('') || '<div class="empty">Nenhuma contestação aberta.</div>') + `<div class="i4-toolbar">${U.link('atendimento', 'Ir para a área de atendimento (analista)')}</div>`, 'F12 · RN1–RN5, RN11, RN12');
   }, 'Movimentar');
-  C.Router.register('atendimento', 'Atendimento simulado', s => U.page('Atendimento Cesbank', 'Selecione o perfil Analista Cesbank para analisar e decidir as ocorrências.', s.disputes.map(q => U.card('Ocorrência ' + q.id, record(q) + (q.status === 'ABERTA' ? U.action('Iniciar análise', () => {
+  C.Router.register('atendimento', 'Atendimento simulado', s => U.page('Atendimento Cesbank', 'Selecione o perfil Analista Cesbank para analisar e decidir as ocorrências.', s.disputes.map(q => U.card('Ocorrência ' + q.id, record(q) + '<div class="i4-analyst">' + (q.status === 'ABERTA' ? '<div class="actions">' + U.action('Iniciar análise', () => {
     C.Db.transaction(x => state(x, q.id, 'EM_ANALISE'));
     U.done('Ocorrência em análise; cliente notificado.');
-  }, 'secondary') : '') + (['ABERTA', 'EM_ANALISE'].includes(q.status) && !q.extended ? U.form(U.field('reason', 'Justificativa da prorrogação'), d => {
-    C.Db.transaction(x => extend(x, q.id, d.reason));
-    U.done('Prazo prorrogado uma única vez por 10 dias úteis.');
-  }, 'Prorrogar prazo', 'secondary') : '') + (q.status === 'EM_ANALISE' ? U.form(U.select('decision', 'Decisão', ['PROCEDENTE', 'IMPROCEDENTE']) + U.select('reason', 'Motivo codificado', ['MD06', 'BE08', 'FR01']) + U.field('value', 'Valor da devolução total/parcial', M.decimal(q.value)) + U.field('justification', 'Justificativa da decisão'), d => {
+  }) + '</div>' : '') + (q.status === 'EM_ANALISE' ? '<div class="i4-pay"><h3>Registrar decisão</h3>' + U.form('<div class="fields">' + U.select('decision', 'Decisão', ['PROCEDENTE', 'IMPROCEDENTE']) + U.select('reason', 'Motivo codificado', ['MD06', 'BE08', 'FR01']) + U.field('value', 'Valor da devolução total/parcial', M.decimal(q.value)) + U.field('justification', 'Justificativa da decisão') + '</div>', d => {
     C.Db.transaction(x => state(x, q.id, d.decision, d));
     U.done('Decisão registrada; prazos e notificações atualizados.');
-  }, 'Registrar decisão') : '') + (['PROCEDENTE', 'IMPROCEDENTE'].includes(q.status) ? U.action('Encerrar ocorrência', () => {
+  }, 'Registrar decisão') + '</div>' : '') + (['ABERTA', 'EM_ANALISE'].includes(q.status) && !q.extended ? '<div class="i4-sub">' + U.form(U.field('reason', 'Justificativa da prorrogação'), d => {
+    C.Db.transaction(x => extend(x, q.id, d.reason));
+    U.done('Prazo prorrogado uma única vez por 10 dias úteis.');
+  }, 'Prorrogar prazo', 'secondary') + '</div>' : '') + (q.status === 'PROCEDENTE' && !q.returnTransaction ? `<div class="banner warning">Para encerrar, a devolução precisa ser efetivada primeiro. Abra as Ferramentas de demonstração no fim da página e avance o relógio até ${U.e(K.label(q.returnDue))}.</div>` : '') + (['PROCEDENTE', 'IMPROCEDENTE'].includes(q.status) ? '<div class="actions">' + U.action('Encerrar ocorrência', () => {
     C.Db.transaction(x => state(x, q.id, 'ENCERRADA'));
     U.done('Ocorrência encerrada; histórico preservado.');
-  }, 'secondary') : '') + U.json({
+  }) + '</div>' : '') + '</div>' + U.json({
     blocked: q.blocked,
     extended: q.extended,
     startBy: q.startBy,
     executeBy: q.executeBy,
     refundedAt: q.refundedAt
-  }))).join('') || '<div class="empty">Nenhuma ocorrência para análise.</div>', 'F12 · RN6–RN10, RN12'), 'Conta e segurança');
+  }), 'i4-dispute')).join('') || '<div class="empty">Nenhuma ocorrência para análise.</div>', 'F12 · RN6–RN10, RN12'), 'Conta e segurança');
 })(Cesbank);
