@@ -1,3 +1,41 @@
 /* integrante5 · favoritos · apresentação das telas e RNs do módulo. */
-body[data-route="favoritos"] .card>form{max-width:980px}
-body[data-route="favoritos"] .table-wrap{margin-top:16px}
+body[data-route="favoritos"] .card > form {
+  max-width: 980px;
+}
+
+body[data-route="favoritos"] .table-wrap {
+  margin-top: 16px;
+}
+
+/* Exemplos de demonstração, restritos à página deste módulo. */
+body[data-route="favoritos"] .i5-examples {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+body[data-route="favoritos"] .i5-examples article {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--background);
+  overflow-wrap: anywhere;
+}
+
+body[data-route="favoritos"] .i5-examples h3 {
+  margin: 0 0 8px;
+}
+
+body[data-route="favoritos"] .i5-examples p {
+  margin: 0 0 16px;
+  flex: 1;
+}
+
+@media (max-width: 1000px) {
+  body[data-route="favoritos"] .i5-examples {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,3 +1,220 @@
 /* integrante5 · extrato-export · apresentação das telas e RNs do módulo. */
-body[data-route="extrato"] .card>form{max-width:980px}
-body[data-route="extrato"] .table-wrap{margin-top:16px}
+body[data-route="extrato"] .i5-history-examples {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+body[data-route="extrato"] .i5-history-examples article {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--background);
+  overflow-wrap: anywhere;
+}
+
+body[data-route="extrato"] .i5-history-examples h3 {
+  margin: 14px 0 0;
+}
+
+body[data-route="extrato"] .i5-history-examples p {
+  flex: 1;
+}
+
+@media (max-width: 760px) {
+  body[data-route="extrato"] .i5-history-examples {
+    grid-template-columns: 1fr;
+  }
+}
+
+body[data-route="extrato"] .card > form {
+  max-width: 980px;
+}
+
+body[data-route="extrato"] .table-wrap {
+  margin-top: 16px;
+}
+
+/* Tipos com seleção independente, sem atalhos de teclado obrigatórios. */
+body[data-route="extrato"] .i5-types {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 16px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+body[data-route="extrato"] .i5-types legend {
+  padding: 0 6px;
+  font-weight: 600;
+}
+
+body[data-route="extrato"] .i5-types p {
+  margin: 0 0 14px;
+  font-size: 12px;
+}
+
+body[data-route="extrato"] .i5-type-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+}
+
+body[data-route="extrato"] .i5-type-option {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 12px;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--ink);
+}
+
+body[data-route="extrato"] .i5-type-option:has(input:checked) {
+  background: var(--orange-soft);
+  border-color: var(--orange);
+}
+
+body[data-route="extrato"] .i5-type-option:focus-within {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+}
+
+body[data-route="extrato"] .i5-type-option input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  padding: 0;
+  flex-shrink: 0;
+  accent-color: var(--orange);
+}
+
+/* Exemplos de demonstração, restritos à página deste módulo. */
+body[data-route="extrato"] .i5-examples {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+body[data-route="extrato"] .i5-examples article {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--background);
+  overflow-wrap: anywhere;
+}
+
+body[data-route="extrato"] .i5-examples h3 {
+  margin: 0 0 8px;
+}
+
+body[data-route="extrato"] .i5-examples p {
+  margin: 0 0 16px;
+  flex: 1;
+}
+
+@media (max-width: 1000px) {
+  body[data-route="extrato"] .i5-examples {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* Navegação local entre cadastro/consulta e histórico. */
+body[data-route="extrato"] .i5-tabs {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 6px;
+  margin-bottom: 24px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+body[data-route="extrato"] .i5-tabs a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+body[data-route="extrato"] .i5-tabs a[aria-current="page"] {
+  background: var(--orange-soft);
+  color: var(--orange-dark);
+}
+
+@media (max-width: 760px) {
+  body[data-route="extrato"] .i5-tabs a {
+    flex: 1;
+    white-space: normal;
+    text-align: center;
+    padding: 10px;
+  }
+}
+
+
+/* No celular, cada registro ocupa um cartão com seus campos identificados. */
+@media (max-width: 760px) {
+  body[data-route="extrato"] .i5-file-history > .table-wrap > table > thead {
+    display: none;
+  }
+
+  body[data-route="extrato"] .i5-file-history > .table-wrap > table, body[data-route="extrato"] .i5-file-history > .table-wrap > table > tbody {
+    display: block;
+  }
+
+  body[data-route="extrato"] .i5-file-history > .table-wrap > table > tbody > tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  body[data-route="extrato"] .i5-file-history > .table-wrap > table > tbody > tr > td {
+    display: block;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  body[data-route="extrato"] .i5-file-history > .table-wrap > table > tbody > tr > td:nth-child(n+4) {
+    grid-column: 1 / -1;
+  }
+
+  body[data-route="extrato"] .i5-file-history > .table-wrap > table > tbody > tr > td::before {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  body[data-route="extrato"] .i5-file-history > .table-wrap > table > tbody > tr > td:nth-child(1)::before { content: "Protocolo / geração";
+    }
+  body[data-route="extrato"] .i5-file-history > .table-wrap > table > tbody > tr > td:nth-child(2)::before { content: "Documento / período";
+    }
+  body[data-route="extrato"] .i5-file-history > .table-wrap > table > tbody > tr > td:nth-child(3)::before { content: "Formato";
+    }
+  body[data-route="extrato"] .i5-file-history > .table-wrap > table > tbody > tr > td:nth-child(4)::before { content: "Disponibilidade";
+    }
+  body[data-route="extrato"] .i5-file-history > .table-wrap > table > tbody > tr > td:nth-child(5)::before { content: "Arquivo";
+    }
+}
