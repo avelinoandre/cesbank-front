@@ -259,16 +259,60 @@
   function nextInvoiceDate(f) {
     return K.months(f.cycle + '-01', 1).slice(0, 7) + '-25';
   }
-  C.Router.register('faturas', 'Faturas e compras', s => U.page('Faturas e compras', 'Fechamento no dia 25; vencimento no dia 10 do mês seguinte. Mínimo de 15%.', U.balance(s) + U.link('cartoes', 'Simular uma compra no cartão') + s.invoices.filter(f => f.account === s.session.account).sort((a, b) => a.cycle.localeCompare(b.cycle)).map(f => U.card('Fatura ' + f.cycle, U.badge(f.status) + `<p>Fechamento ${f.close} · vencimento ${f.due}</p><div class="composition"><span>Total do ciclo<b>${U.money(total(f))}</b></span><span>Mínimo exigível<b>${U.money(minimum(f))}</b></span><span>Pago<b>${U.money(f.paid)}</b></span><span>A pagar nesta fatura<b>${U.money(remaining(f))}</b></span></div>` + (f.rolledAmount ? `<div class="banner warning">${U.money(f.rolledAmount)} transportados para o próximo ciclo; rotativo de ${U.money(f.rotationInterest)}. Consulte a fatura seguinte para regularizar.</div>` : '') + U.table(['Lançamento', 'Parcela', 'Principal', 'Encargos', 'Valor', 'Situação / ação'], f.items.map(item => [U.e(item.description), item.count ? item.number + '/' + item.count : '—', U.money(item.principal || 0), U.money(item.interest || 0), U.money(item.amount), item.suspended ? U.badge('COBRANCA_SUSPENSA') : item.advanced ? U.badge('ANTECIPADA') + `<small>Desconto ${U.money(item.discount || 0)}</small>` : (f.status === 'ABERTA' && f.cycle > K.day(s.now).slice(0, 7) && item.purchase ? U.action('Antecipar parcela', () => U.modal('Antecipar parcela futura', `<p>Nominal: ${U.money(item.amount)} · desconto de encargos futuros: ${U.money(item.interest || 0)} · pagar: ${U.money(item.principal ?? item.amount)}.</p>` + U.action('Confirmar antecipação', () => {
-    C.Db.transaction(x => anticipation(x, item.id));
-    U.done('Antecipação processada; limite liberado após liquidação.');
-  })), 'secondary') : '') + (item.purchase ? U.link('contestacoes?fatura=' + f.id + '&item=' + item.id, 'Contestar') : '')])) + (['FECHADA', 'EM_ATRASO', 'PAGA_PARCIALMENTE'].includes(f.status) && remaining(f) > 0 ? U.form(U.select('mode', 'Forma de pagamento', [['TOTAL', 'Total'], ['MINIMO', 'Mínimo'], ['PARCIAL', 'Parcial']]) + U.field('value', 'Valor do pagamento parcial', M.decimal(minimum(f))), d => {
-    let tx;
-    C.Db.transaction(x => {
-      const q = x.invoices.find(q => q.id === f.id);
-      const value = d.mode === 'TOTAL' ? remaining(q) : d.mode === 'MINIMO' ? minimum(q) : M.parse(d.value);
-      tx = pay(x, f.id, value);
-    });
-    U.done(tx.status === 'EFETIVADA' ? 'Fatura paga; limite recomposto após liquidação.' : 'Falha operacional com estorno; limite e fatura preservados.');
-  }, 'Confirmar pagamento') : '') + U.history(f))).join('') + (!s.invoices.some(f => f.account === s.session.account) ? '<div class="empty">Nenhuma fatura. Autorize e confirme uma compra para gerar os lançamentos.</div>' : ''), 'F11 · RN1–RN12'), 'Cadastro e crédito');
+  /* ---- Apresentação (integrante 4): status coloridos e fluxo de pagamento destacado ---- */
+  const STATUS = {
+    ABERTA: 'aberta', FECHADA: 'fechada', PAGA: 'paga', PAGA_PARCIALMENTE: 'parcial',
+    EM_ATRASO: 'atraso', COBRANCA_SUSPENSA: 'suspensa', ANTECIPADA: 'antecipada'
+  };
+  const HINT = {
+    ABERTA: 'Ciclo em andamento: ainda recebe compras.',
+    FECHADA: 'Pronta para pagamento.',
+    PAGA: 'Quitada.',
+    PAGA_PARCIALMENTE: 'Ainda há saldo a pagar.',
+    EM_ATRASO: 'Vencida: pague para evitar bloqueio do cartão.'
+  };
+  function sBadge(v) {
+    return `<span class="i4-badge st-${STATUS[v] || 'neutro'}">${U.e(String(v).replace(/_/g, ' '))}</span>`;
+  }
+  function sHistory(row) {
+    const rows = row.history || [];
+    return `<details class="i4-history"><summary>Histórico da fatura (${rows.length})</summary>` + U.table(['Data e hora', 'Situação', 'Responsável', 'Detalhe'], rows.map(h => [U.e(K.label(h.at)), sBadge(h.to), U.e(h.actor), U.e(h.detail)])) + '</details>';
+  }
+  function itemAction(s, f, item) {
+    let out = '';
+    if (item.suspended) out += sBadge('COBRANCA_SUSPENSA');
+    else if (item.advanced) out += sBadge('ANTECIPADA') + `<small>Desconto ${U.money(item.discount || 0)}</small>`;
+    else if (f.status === 'ABERTA' && f.cycle > K.day(s.now).slice(0, 7) && item.purchase) out += U.action('Antecipar parcela', () => U.modal('Antecipar parcela futura', `<p>Nominal: ${U.money(item.amount)} · desconto de encargos futuros: ${U.money(item.interest || 0)} · pagar: ${U.money(item.principal ?? item.amount)}.</p>` + U.action('Confirmar antecipação', () => {
+      C.Db.transaction(x => anticipation(x, item.id));
+      U.done('Antecipação processada; limite liberado após liquidação.');
+    })), 'i4-btn-advance');
+    if (item.purchase && !item.suspended) out += `<a class="button i4-btn-contest" href="#contestacoes?fatura=${U.e(f.id)}&item=${U.e(item.id)}">Contestar</a>`;
+    return out;
+  }
+  function payBox(f) {
+    if (!(['FECHADA', 'EM_ATRASO', 'PAGA_PARCIALMENTE'].includes(f.status) && remaining(f) > 0)) return '';
+    return '<div class="i4-pay"><h3>Pagar esta fatura</h3>' + U.form('<div class="fields">' + U.select('mode', 'Forma de pagamento', [['TOTAL', 'Total · ' + M.fmt(remaining(f))], ['MINIMO', 'Mínimo · ' + M.fmt(minimum(f))], ['PARCIAL', 'Parcial · escolher valor']]) + U.field('value', 'Valor do pagamento parcial', M.decimal(minimum(f))) + '</div>', d => {
+      let tx;
+      C.Db.transaction(x => {
+        const q = x.invoices.find(q => q.id === f.id);
+        const value = d.mode === 'TOTAL' ? remaining(q) : d.mode === 'MINIMO' ? minimum(q) : M.parse(d.value);
+        tx = pay(x, f.id, value);
+      });
+      U.done(tx.status === 'EFETIVADA' ? 'Fatura paga; limite recomposto após liquidação.' : 'Falha operacional com estorno; limite e fatura preservados.');
+    }, 'Confirmar pagamento') + '</div>';
+  }
+  function invoiceCard(s, f) {
+    const st = STATUS[f.status] || 'neutro';
+    const head = `<div class="i4-head">${sBadge(f.status)}<span class="i4-hint">${U.e(HINT[f.status] || '')}</span></div>` +
+      `<p class="i4-dates">Fechamento <b>${f.close}</b> · Vencimento <b>${f.due}</b></p>`;
+    const sums = `<div class="i4-sums"><div><span>Total do ciclo</span><b>${U.money(total(f))}</b></div><div><span>Mínimo exigível</span><b>${U.money(minimum(f))}</b></div><div><span>Pago</span><b>${U.money(f.paid)}</b></div><div class="i4-due"><span>A pagar nesta fatura</span><b>${U.money(remaining(f))}</b></div></div>`;
+    const rot = f.rolledAmount ? `<div class="banner warning">${U.money(f.rolledAmount)} transportados para o próximo ciclo; rotativo de ${U.money(f.rotationInterest)}. Consulte a fatura seguinte para regularizar.</div>` : '';
+    const table = U.table(['Lançamento', 'Parcela', 'Principal', 'Encargos', 'Valor', 'Situação / ação'], f.items.map(item => [U.e(item.description), item.count ? item.number + '/' + item.count : '—', U.money(item.principal || 0), U.money(item.interest || 0), `<b>${U.money(item.amount)}</b>`, `<div class="i4-row-actions">${itemAction(s, f, item)}</div>`]));
+    return U.card('Fatura ' + f.cycle, head + sums + rot + table + payBox(f) + sHistory(f), 'i4-invoice st-' + st);
+  }
+  C.Router.register('faturas', 'Faturas e compras', s => {
+    const list = s.invoices.filter(f => f.account === s.session.account).sort((a, b) => a.cycle.localeCompare(b.cycle));
+    const legend = '<div class="i4-legend"><span>Legenda:</span>' + ['ABERTA', 'FECHADA', 'PAGA_PARCIALMENTE', 'PAGA', 'EM_ATRASO', 'COBRANCA_SUSPENSA'].map(sBadge).join('') + '</div>';
+    return U.page('Faturas e compras', 'Fechamento no dia 25; vencimento no dia 10 do mês seguinte. Mínimo de 15%.', U.balance(s) + `<div class="i4-toolbar">${U.link('cartoes', 'Simular uma compra no cartão')}${list.length ? legend : ''}</div>` + list.map(f => invoiceCard(s, f)).join('') + (!list.length ? '<div class="empty">Nenhuma fatura. Autorize e confirme uma compra para gerar os lançamentos.</div>' : ''), 'F11 · RN1–RN12');
+  }, 'Cadastro e crédito');
 })(Cesbank);
