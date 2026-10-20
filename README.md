@@ -19,7 +19,7 @@ A navegação visual foi verificada por HTTP local. O navegador de teste não pe
 1. core/js/money.js, ids.js, errors.js, clock.js, security.js e validators.js: valores, formatos, datas e confirmações simuladas.
 2. core/js/seed.js, db.js, services.js e session.js: estado inicial, atomicidade, contas, transações e papéis.
 3. core/js/router.js, ui.js e core/css/base.css: aplicação hash, componentes e aparência.
-4. integrante6/: chaves, limites, dados/senha; integrante1/: transferências, investimentos, caixinhas.
+4. integrante6/: chaves, limites, dados/senha; integrante1/: transferências, serviços de investimentos, telas dos dois CRUDs e caixinhas.
 5. integrante2/: abertura, empréstimo, encerramento, administração; integrante5/: recorrências, favoritos, exportação.
 6. integrante3/: boletos e cartão; integrante4/: fatura e contestação, integrados aos serviços anteriores.
 7. core/requisitos.js, cenarios.js, testes.js, validacao.js e core/js/app.js: catálogo, preparação de dados, testes isolados e inicialização.
@@ -51,11 +51,20 @@ O botão Executar verificações automáticas roda em estado isolado, sem gravar
 
 ## Roteiros de telas dos documentos
 
+### Investimentos: uma entrada para cliente e analista
+
+| Perfil | Tela | O que aparece |
+| --- | --- | --- |
+| Cliente | #investimentos | Caixinhas, outros produtos disponíveis, nova aplicação e posições contratadas. Caixinhas abrem em #caixinhas e seguem regras próprias. |
+| Analista | #investimentos → Adicionar produto ou Gerenciar produtos → #gerenciar-investimentos | O botão Adicionar produto abre o cadastro diretamente. A página de gestão reúne categorias (CDB, fundo, ação), produtos oferecidos com suas condições, cotações e indexadores. Caixinhas ficam fora desses cadastros. |
+
+Os dois cadastros administrativos são categoria e produto oferecido, reunidos na mesma tela para simplificar o uso. O cliente acompanha suas posições em #aplicacao?id=... e pode simular resgate total ou parcial antes de confirmar. As condições contratadas são preservadas se um produto do catálogo for editado. Renda fixa recebe apuração diária conforme a regra do produto; ações acompanham a cotação atualizada pelo analista.
+
 ### Caixinhas vinte telas e estados
 
 | Tela do documento | Implementação / como reproduzir |
 | --- | --- |
-| 1 Início / acesso | #inicio, botão Ver caixinhas. |
+| 1 Início / acesso | #inicio → Ver investimentos → Ver ou criar caixinhas. |
 | 2 Primeiro acesso vazio | Reiniciar dados, #caixinhas. |
 | 3 Lista e nova | #caixinhas, criar uma caixinha e voltar à lista. |
 | 4 Nome repetido/meta inválida | Preparar F13b RN1, submeter os dados preparados. |

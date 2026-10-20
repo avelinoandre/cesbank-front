@@ -185,8 +185,16 @@
       schedules: [],
       exports: [],
       applications: [],
+      investmentFamilies: [{
+        id: 'f-cdb', name: 'CDB Cesbank', type: 'CDB', description: 'Certificados de depósito bancário', available: true
+      }, {
+        id: 'f-fundo', name: 'Fundos Cesbank', type: 'FUNDO', description: 'Fundos de investimento', available: true
+      }, {
+        id: 'f-acao', name: 'Ações', type: 'ACAO', description: 'Ativos de renda variável', available: true
+      }],
       products: [{
         id: 'p1',
+        family: 'f-cdb',
         name: 'CDB Prefixado',
         type: 'CDB',
         rateType: 'PREFIXADO',
@@ -200,6 +208,7 @@
         quote: 0
       }, {
         id: 'p2',
+        family: 'f-cdb',
         name: 'CDB 110% CDI',
         type: 'CDB',
         rateType: 'POS_FIXADO_CDI',
@@ -212,6 +221,7 @@
         quote: 0
       }, {
         id: 'p3',
+        family: 'f-cdb',
         name: 'CDB IPCA + 6%',
         type: 'CDB',
         rateType: 'HIBRIDO_IPCA',
@@ -224,6 +234,7 @@
         quote: 0
       }, {
         id: 'p4',
+        family: 'f-acao',
         name: 'CESB3 · ação fictícia',
         type: 'ACAO',
         minimum: 1,
@@ -233,6 +244,7 @@
         waitDays: 0
       }, {
         id: 'p5',
+        family: 'f-fundo',
         name: 'Fundo Ces Renda',
         type: 'FUNDO',
         rateType: 'PREFIXADO',

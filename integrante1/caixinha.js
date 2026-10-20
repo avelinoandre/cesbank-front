@@ -122,7 +122,7 @@
     C.Router.go('caixinha?id=' + b.id);
     U.render();
     U.flash('Caixinha criada com sucesso.');
-  }, 'Criar caixinha')), 'F13b · RN1, RN2, RN4, RN8'), 'Investir');
+  }, 'Criar caixinha')) + U.link('investimentos', 'Voltar a investimentos'), 'F13b · RN1, RN2, RN4, RN8'), null);
   C.Router.register('caixinha', 'Detalhe da caixinha', (s, p) => {
     const b = s.boxes.find(b => b.id === p.get('id') && b.account === s.session.account);
     C.assert(b, 'Caixinha não encontrada.');
@@ -141,6 +141,6 @@
     }, 'danger')), 'danger') + '</div>' : '')) + U.card('Extrato da caixinha', U.form('<div class="fields">' + U.field('start', 'Data inicial', filter.start, 'date') + U.field('end', 'Data final', filter.end, 'date') + U.select('type', 'Movimento', [['', 'Todos'], 'DEPOSITO', 'RESGATE', 'RENDIMENTO'], filter.type) + '</div>', d => {
       C.assert(!d.start || !d.end || d.start <= d.end, 'A data inicial não pode ser posterior à final.', 'PeriodoInvalido');
       C.Router.go('caixinha?id=' + b.id + '&inicio=' + d.start + '&fim=' + d.end + '&tipo=' + d.type);
-    }, 'Filtrar', 'secondary') + U.table(['Data', 'Tipo', 'Valor', 'Saldo após'], rows.map(r => [U.e(K.label(r.at)), U.e(r.type), U.money(r.value), U.money(r.balance)]))) + U.card('Histórico de situações', U.history(b)) + U.link('caixinhas', 'Todas as caixinhas'), 'F13b · RN3–RN10');
+    }, 'Filtrar', 'secondary') + U.table(['Data', 'Tipo', 'Valor', 'Saldo após'], rows.map(r => [U.e(K.label(r.at)), U.e(r.type), U.money(r.value), U.money(r.balance)]))) + U.card('Histórico de situações', U.history(b)) + U.link('caixinhas', 'Todas as caixinhas') + U.link('investimentos', 'Voltar a investimentos'), 'F13b · RN3–RN10');
   }, null);
 })(Cesbank);

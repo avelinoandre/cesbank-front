@@ -1,3 +1,17 @@
 /* integrante1 · investimentos · apresentação das telas e RNs do módulo. */
 body[data-route="investimentos"] .card>form{max-width:980px}
 body[data-route="investimentos"] .table-wrap{margin-top:16px}
+.invest-application-form[data-type="ACAO"] .invest-value,
+.invest-application-form:not([data-type="ACAO"]) .invest-quantity,
+.invest-product-form[data-type="ACAO"] .invest-rate,
+.invest-product-form[data-type="ACAO"] .invest-annual,
+.invest-product-form[data-type="ACAO"] .invest-cdi,
+.invest-product-form[data-type="ACAO"] .invest-liquidity,
+.invest-product-form[data-type="ACAO"] .invest-wait,
+.invest-product-form:not([data-type="ACAO"]) .invest-quote,
+.invest-product-form:not([data-rate="POS_FIXADO_CDI"]) .invest-cdi,
+.invest-product-form[data-rate="POS_FIXADO_CDI"] .invest-annual,
+.invest-product-form:not([data-liquidity="CARENCIA"]) .invest-wait{display:none}
+.invest-create{border-top:1px solid #ece8e2;padding-top:16px}
+.invest-create summary{font-size:14px;color:#4d4035}
+.invest-create form{margin-top:18px;max-width:980px}

@@ -1,4 +1,4 @@
-/* Integrante 1 · F13a RN1–RN11 · CRUD de produtos/aplicações e posição consolidada. */
+/* Integrante 1 · F13a RN1–RN11 · serviços de produtos, aplicações e posição consolidada. */
 (function (C) {
   'use strict';
 
@@ -7,10 +7,37 @@
     M = C.M,
     K = C.Clock;
   const iof = [100, 96, 93, 90, 86, 83, 80, 76, 73, 70, 66, 63, 60, 56, 53, 50, 46, 43, 40, 36, 33, 30, 26, 23, 20, 16, 13, 10, 6, 3, 0];
+  function ensureCatalog(s) {
+    s.investmentFamilies ||= [
+      {id: 'f-cdb', name: 'CDB Cesbank', type: 'CDB', description: 'Certificados de depósito bancário', available: true},
+      {id: 'f-fundo', name: 'Fundos Cesbank', type: 'FUNDO', description: 'Fundos de investimento', available: true},
+      {id: 'f-acao', name: 'Ações', type: 'ACAO', description: 'Ativos de renda variável', available: true}
+    ];
+    s.products.forEach(p => {
+      if (!p.family) p.family = s.investmentFamilies.find(f => f.type === p.type && !f.removed)?.id;
+    });
+    return s.investmentFamilies;
+  }
+  function saveFamily(s, d, id) {
+    C.Session.requireAnalyst(s);
+    const families = ensureCatalog(s);
+    const name = String(d.name || '').trim(), description = String(d.description || '').trim();
+    C.assert(name, 'Informe o nome do produto de investimento.');
+    C.assert(['CDB', 'FUNDO', 'ACAO'].includes(d.type), 'Tipo de investimento inválido.');
+    C.assert(!families.some(f => f.id !== id && !f.removed && f.name.toLowerCase() === name.toLowerCase()), 'Já existe um produto com esse nome.');
+    const family = id ? families.find(f => f.id === id && !f.removed) : {id: C.Ids.uuid()};
+    C.assert(family, 'Produto de investimento não encontrado.');
+    if (id) C.assert(family.type === d.type || !s.products.some(p => p.family === id && !p.removed), 'O tipo de um produto com variações não pode ser alterado.');
+    Object.assign(family, {name, type: d.type, description, available: !!d.available});
+    if (!id) families.push(family);
+    C.S.audit(s, 'familia_investimento', family.id, id ? 'Produto atualizado.' : 'Produto criado.');
+    return family;
+  }
   function apply(s, d) {
     C.Session.requireClient(s);
+    ensureCatalog(s);
     const p = s.products.find(p => p.id === d.product && !p.removed);
-    if (!p || !p.available) C.fail('ProdutoIndisponivel');
+    if (!p || !p.available || !s.investmentFamilies.some(f => f.id === p.family && !f.removed && f.available)) C.fail('ProdutoIndisponivel');
     const stock = p.type === 'ACAO';
     const qty = stock ? Number(d.quantity) : 0;
     C.assert(!stock || Number.isInteger(qty) && qty > 0 && qty <= 1000000, 'Quantidade de ações deve ser inteira e positiva.');
@@ -136,7 +163,9 @@
     preview,
     redeem,
     quote,
-    position
+    position,
+    ensureCatalog,
+    saveFamily
   };
   C.processors.push(s => {
     s.applications.filter(a => a.type !== 'ACAO' && a.status !== 'RESGATADA').forEach(app => {
@@ -160,25 +189,27 @@
       app.lastAccrual = K.day(s.now);
     });
   });
-  function productForm(p = {}) {
-    return '<div class="fields">' + U.field('name', 'Nome', p.name || 'Novo produto') + U.select('type', 'Tipo', ['CDB', 'FUNDO', 'ACAO'], p.type) + U.select('rateType', 'Rentabilidade', ['PREFIXADO', 'POS_FIXADO_CDI', 'HIBRIDO_IPCA'], p.rateType) + U.field('annualBp', 'Taxa prefixada / adicional anual (pontos-base)', p.annualBp || 1200, 'number') + U.field('cdiPercentBp', 'Percentual CDI em pontos-base (11000 = 110%)', p.cdiPercentBp || 10000, 'number') + U.field('minimum', 'Aplicação mínima', M.decimal(p.minimum || 10000)) + U.field('quote', 'Cotação da ação', M.decimal(p.quote || 2500)) + U.select('liquidity', 'Liquidez', ['DIARIA', 'CARENCIA'], p.liquidity) + U.field('waitDays', 'Carência em dias', p.waitDays || 0, 'number') + U.checkbox('available', 'Produto disponível', p.available !== false) + '</div>';
-  }
   function saveProduct(s, d, id) {
     C.Session.requireAnalyst(s);
+    const families = ensureCatalog(s);
     C.assert(d.name.trim(), 'Nome do produto obrigatório.');
+    const family = families.find(f => f.id === d.family && !f.removed);
+    C.assert(family, 'Escolha um produto de investimento válido.');
+    C.assert(!s.products.some(p => p.id !== id && p.family === family.id && !p.removed && p.name.toLowerCase() === d.name.trim().toLowerCase()), 'Já existe uma variação com esse nome neste produto.');
     const wait = Number(d.waitDays),
       rate = Number(d.annualBp),
       cdi = Number(d.cdiPercentBp);
     C.assert(Number.isInteger(wait) && wait >= 0 && Number.isInteger(rate) && rate >= 0 && rate <= 100000 && Number.isInteger(cdi) && cdi >= 0, 'Taxas e carência devem ser inteiros não negativos.');
-    C.assert(['CDB', 'FUNDO', 'ACAO'].includes(d.type) && ['PREFIXADO', 'POS_FIXADO_CDI', 'HIBRIDO_IPCA'].includes(d.rateType) && ['DIARIA', 'CARENCIA'].includes(d.liquidity), 'Enumeração de produto inválida.');
+    C.assert(['PREFIXADO', 'POS_FIXADO_CDI', 'HIBRIDO_IPCA'].includes(d.rateType) && ['DIARIA', 'CARENCIA'].includes(d.liquidity), 'Enumeração de produto inválida.');
     const p = id ? s.products.find(p => p.id === id) : {
       id: C.Ids.uuid()
     };
     C.assert(p, 'Produto inexistente.');
-    if (id) C.assert(p.type === d.type || !s.applications.some(a => a.product === id), 'O tipo de produto com aplicações não pode ser alterado.');
+    if (id) C.assert(p.family === family.id || !s.applications.some(a => a.product === id), 'O produto de uma variação já contratada não pode ser alterado.');
     Object.assign(p, {
       name: d.name.trim(),
-      type: d.type,
+      family: family.id,
+      type: family.type,
       rateType: d.rateType,
       annualBp: rate,
       cdiPercentBp: cdi,
@@ -193,56 +224,5 @@
     } else if (p.type === 'ACAO') quote(s, id, M.parse(d.quote));
     C.S.audit(s, 'produto', p.id, id ? 'Produto atualizado; condições das aplicações preservadas.' : 'Produto criado.');
   }
-  C.Router.register('investimentos', 'Investimentos', s => U.page('Investimentos', 'Renda fixa e variável, com posição consolidada e simulação antes do resgate.', U.balance(s) + U.link('produtos', 'Administrar produtos · analista') + U.card('Aplicar ou comprar ações', U.form('<div class="fields">' + U.select('product', 'Produto', s.products.filter(p => !p.removed).map(p => [p.id, `${p.name} · mínimo ${U.money(p.minimum)} · ${p.available ? 'disponível' : 'indisponível'}`])) + U.field('value', 'Valor para renda fixa / fundo', '500.00') + U.field('quantity', 'Quantidade inteira de ações', '10', 'number') + U.field('note', 'Apelido da aplicação', '') + '</div>', d => {
-    C.Db.transaction(x => apply(x, d));
-    U.done('Aplicação registrada. Valor separado do saldo disponível.');
-  }, 'Aplicar')) + U.card('Posição consolidada por produto', U.table(['Produto', 'Principal aplicado', 'Rendimento / variação', 'Valor atual', 'Preço médio de compra'], position(s).map(p => [U.e(p.name), U.money(p.principal), U.money(p.balance - p.principal), U.money(p.balance), p.quantity ? U.money(M.mul(p.principal, 1, p.quantity)) : '—']))) + U.card('Minhas aplicações e posição consolidada', U.table(['Produto / data original', 'Principal', 'Rendimento / variação', 'Valor atual', 'Situação / carência', 'Ações'], s.applications.filter(p => p.account === s.session.account && !p.archived).map(p => [U.e(p.note || p.productName) + `<small>${U.e(p.originalDate)} · ${U.e(p.rateType || 'Cotação de mercado')} ${p.type === 'ACAO' ? '· ' + p.quantity + ' ações · sem garantia de rentabilidade' : ''}</small>`, U.money(p.principal), U.money(p.balance - p.principal), U.money(p.balance), U.badge(p.status) + `<small>Resgate a partir de ${U.e(p.maturity)}</small>`, (p.status !== 'RESGATADA' ? U.action('Simular resgate', () => U.modal('Simular resgate', U.form(p.type === 'ACAO' ? U.field('quantity', 'Quantidade a vender', p.quantity, 'number') : U.field('value', 'Valor bruto', M.decimal(p.balance)), d => {
-    const q = preview(C.Db.get(), p, d.value, d.quantity);
-    U.modal('Confirme o resgate', U.table(['Bruto', 'Rendimento tributável', 'IOF', 'IR', 'Corretagem', 'Líquido'], [[U.money(q.gross), U.money(q.gain), U.money(q.iof), U.money(q.ir), U.money(q.fee), U.money(q.net)]]) + `<p>Prazo original: ${q.days} dias. IR: ${M.percent(q.irBp)}. Resgate parcial preserva a data original.</p>` + U.action('Confirmar resgate', () => {
-      C.Db.transaction(x => redeem(x, p.id, q));
-      U.done('Resgate realizado para a conta de origem.');
-    }));
-  }, 'Calcular')), 'secondary') : '') + U.action('Editar apelido', () => U.modal('Editar aplicação', U.form(U.field('note', 'Apelido', p.note), d => {
-    C.Db.transaction(x => {
-      const a = C.S.owner(x, x.applications.find(a => a.id === p.id));
-      a.note = d.note;
-      C.S.audit(x, 'aplicacao', a.id, 'Apelido atualizado.');
-    });
-    U.done('Aplicação atualizada.');
-  }, 'Salvar')), 'secondary') + U.action('Excluir do painel', () => {
-    C.Db.transaction(x => {
-      const a = C.S.owner(x, x.applications.find(a => a.id === p.id));
-      C.assert(a.status === 'RESGATADA', 'Resgate todo o saldo antes de excluir a aplicação do painel.');
-      a.archived = true;
-      C.S.audit(x, 'aplicacao', a.id, 'Remoção lógica após resgate total.');
-    });
-    U.done('Aplicação arquivada; histórico preservado.');
-  }, 'danger') + U.history(p)]))) + U.card('Indexadores fictícios vigentes', U.form(U.field('cdi', 'CDI anual · pontos-base', s.indices.cdiBp, 'number') + U.field('ipca', 'IPCA anual · pontos-base', s.indices.ipcaBp, 'number'), d => {
-    C.Db.transaction(x => {
-      C.Session.requireAnalyst(x);
-      C.assert([d.cdi, d.ipca].every(v => /^\d{1,5}$/.test(v)), 'Informe taxas inteiras em pontos-base.');
-      x.indices = {
-        cdiBp: Number(d.cdi),
-        ipcaBp: Number(d.ipca)
-      };
-    });
-    U.done('Indexadores fictícios atualizados.');
-  }, 'Atualizar índices · analista', 'secondary')), 'F13a · RN1–RN11'), 'Investir');
-  C.Router.register('produtos', 'Produtos de investimento', s => U.page('Produtos de investimento', 'CRUD de produtos. Edições não alteram as condições já contratadas.', U.card('Produtos', U.table(['Nome', 'Tipo', 'Situação', 'Ações'], s.products.filter(p => !p.removed).map(p => [U.e(p.name), U.e(p.type), U.badge(p.available ? 'DISPONIVEL' : 'INDISPONIVEL'), U.action('Editar', () => U.modal('Editar produto', U.form(productForm(p), d => {
-    C.Db.transaction(x => saveProduct(x, d, p.id));
-    U.done('Produto atualizado.');
-  }, 'Salvar')), 'secondary') + U.action('Excluir', () => {
-    C.Db.transaction(x => {
-      C.Session.requireAnalyst(x);
-      const r = x.products.find(q => q.id === p.id);
-      C.assert(!x.applications.some(a => a.product === p.id && a.status !== 'RESGATADA'), 'Há posições ativas vinculadas ao produto.');
-      r.removed = true;
-      r.available = false;
-      C.S.audit(x, 'produto', r.id, 'Remoção lógica.');
-    });
-    U.done('Produto removido do catálogo.');
-  }, 'danger') + U.json(p)]))) + U.card('Criar produto', U.form(productForm(), d => {
-    C.Db.transaction(x => saveProduct(x, d));
-    U.done('Produto criado.');
-  }, 'Criar produto')) + U.link('investimentos', 'Voltar aos investimentos'), 'F13a · RN1, RN2, RN8–RN10'), null);
+  C.S.investments.saveProduct = saveProduct;
 })(Cesbank);
