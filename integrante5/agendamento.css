@@ -29,27 +29,33 @@ body[data-route="agendamentos"] .i5-status-count.active {
 
 body[data-route="agendamentos"] .i5-status {
   display: inline-block;
-  padding: 5px 10px;
-  border-radius: 7px;
-  font-size: 12px;
-  font-weight: 600;
-  background: #fff4d6;
-  color: #795300;
+  padding: 4px 9px;
+  border: 1px solid var(--badge-line);
+  border-radius: 20px;
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: .4px;
+  white-space: nowrap;
+  background: var(--badge-background);
+  color: var(--badge-color);
 }
 
 body[data-route="agendamentos"] .i5-status[data-status="EXECUTADA"] {
   background: var(--green-soft);
   color: var(--green);
+  border-color: var(--success-line);
 }
 
 body[data-route="agendamentos"] .i5-status[data-status="CANCELADA"] {
-  background: #eeeef3;
-  color: #565568;
+  background: var(--red-soft);
+  color: var(--red);
+  border-color: var(--error-line);
 }
 
 body[data-route="agendamentos"] .i5-status[data-status="FALHADA"] {
   background: var(--red-soft);
   color: var(--red);
+  border-color: var(--error-line);
 }
 
 body[data-route="agendamentos"] .i5-occurrence-actions {

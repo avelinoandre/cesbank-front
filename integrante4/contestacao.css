@@ -3,30 +3,30 @@
 body[data-route="contestacoes"] .card>form{max-width:980px}
 body[data-route="contestacoes"] .table-wrap{margin-top:16px}
 
-/* Formulários de abertura com faixa de destaque */
-.card.i4-form-card{border-left:6px solid var(--orange);padding-left:26px}
+/* Cartões usam as bordas e o espaçamento da base compartilhada. */
+
 .card.i4-focus{box-shadow:0 0 0 3px var(--orange-soft),0 0 0 5px var(--orange)}
 
 /* Cada ocorrência separada visualmente */
-.i4-record+.i4-record{margin-top:22px;padding-top:22px;border-top:2px solid var(--line)}
-.card.i4-dispute{border-left:6px solid var(--i4-violet);padding-left:26px}
+.i4-record+.i4-record{margin-top:22px;padding-top:22px;border-top:1px solid var(--line)}
+
 
 /* Linha do tempo: Aberta → Em análise → Decisão → Encerrada */
 .i4-track{list-style:none;display:flex;gap:0;margin:4px 0 18px;padding:0;counter-reset:none}
-.i4-track li{flex:1;position:relative;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#8a827a;padding-right:12px}
-.i4-track li:not(:last-child):after{content:'';flex:1;height:3px;border-radius:2px;background:#ddd6cf;margin-left:4px}
-.i4-track li span{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;border:2px solid #cfc7bf;background:#fff;font-size:12px}
-.i4-track li.done{color:var(--i4-green)}
-.i4-track li.done span{background:var(--i4-green);border-color:var(--i4-green);color:#fff}
-.i4-track li.done:after{background:var(--i4-green)}
+.i4-track li{flex:1;position:relative;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--muted);padding-right:12px}
+.i4-track li:not(:last-child):after{content:'';flex:1;height:3px;border-radius:2px;background:var(--line);margin-left:4px}
+.i4-track li span{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;border:2px solid var(--line);background:#fff;font-size:12px}
+.i4-track li.done{color:var(--green)}
+.i4-track li.done span{background:var(--green);border-color:var(--green);color:#fff}
+.i4-track li.done:after{background:var(--green)}
 .i4-track li.now{color:var(--orange-dark)}
 .i4-track li.now span{background:var(--orange);border-color:var(--orange);color:#fff;box-shadow:0 0 0 4px var(--orange-soft)}
-.i4-track li.now.neg{color:var(--i4-red)}
-.i4-track li.now.neg span{background:var(--i4-red);border-color:var(--i4-red);box-shadow:0 0 0 4px var(--i4-red-bg)}
+.i4-track li.now.neg{color:var(--red)}
+.i4-track li.now.neg span{background:var(--red);border-color:var(--red);box-shadow:0 0 0 4px var(--red-soft)}
 
 /* Área do analista */
 .i4-analyst{margin-top:8px}
-.i4-sub{margin-top:16px;padding:14px 18px;border:1px solid var(--line);border-radius:10px;background:#faf8f5}
+.i4-sub{margin-top:16px;padding:14px 18px;border:1px solid var(--line);border-radius:10px;background:var(--background)}
 .i4-sub form{max-width:560px}
 
 @media(max-width:760px){.i4-track{flex-direction:column;gap:8px}.i4-track li:after{display:none}}

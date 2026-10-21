@@ -19,7 +19,7 @@ body[data-route="boletos"] .table-wrap{margin-top:16px}
 .i3-radios .check{margin-bottom:8px}
 .i3-big{font-size:46px;font-weight:650;letter-spacing:-1.5px;margin:4px 0 6px}
 .i3-info{background:var(--orange-soft);border:1px solid #efd3b6;color:#85501f;border-radius:9px;padding:14px 18px;margin:18px 0 0;line-height:1.6}
-@media(max-width:1000px){.i3-split{grid-template-columns:1fr}}
+@media(max-width:1000px){.i3-split{grid-template-columns:minmax(0,1fr)}}
 
 .i3-example{border:1px dashed #e0b896;background:#fffaf5;border-radius:10px;padding:16px 18px;margin:0 0 20px}
 .i3-example>strong{display:block;font-size:10px;letter-spacing:1.3px;text-transform:uppercase;color:var(--orange);margin-bottom:8px}
@@ -28,3 +28,4 @@ body[data-route="boletos"] .table-wrap{margin-top:16px}
 .i3-example .i3-rows>div{padding:8px 0;font-size:12px}
 .i3-example .actions{margin-top:10px}
 .i3-example button{font-size:11px;padding:7px 10px;min-height:32px}
+.i3-split>*{min-width:0}

@@ -1,107 +1,45 @@
-/* integrante4 · fatura · apresentação das telas e RNs do módulo.
-   Estilos com prefixo i4- e escopo nas rotas faturas/contestacoes/atendimento,
-   para não alterar a aparência dos módulos dos outros integrantes. */
+/* Integrante 4: componentes visuais seguem a base compartilhada do integrante 2.
+   As regras de visibilidade do pagamento parcial são preservadas. */
 body[data-route="faturas"] .card>form{max-width:980px}
 body[data-route="faturas"] .table-wrap{margin-top:16px}
 
-/* Paleta de status: cada situação tem uma cor própria e legível sem hover. */
-:root{
-  --i4-blue:#1f5fbf;--i4-blue-bg:#e6efff;
-  --i4-amber:#9a5a00;--i4-amber-bg:#fff1d6;--i4-amber-line:#e8a93a;
-  --i4-green:#1d7a46;--i4-green-bg:#dcf3e5;
-  --i4-teal:#0f6f74;--i4-teal-bg:#d9f1f2;
-  --i4-red:#b42318;--i4-red-bg:#fde4e1;
-  --i4-violet:#6b3fb5;--i4-violet-bg:#efe6ff;
-  --i4-gray:#4b4641;--i4-gray-bg:#ebe7e3
-}
+.i4-badge{display:inline-block;background:var(--badge-background);color:var(--badge-color);border:1px solid var(--badge-line);border-radius:20px;padding:4px 9px;font-size:9px;font-weight:650;letter-spacing:.4px;white-space:nowrap}
+.i4-badge.st-paga,.i4-badge.st-antecipada{background:var(--green-soft);color:var(--green);border-color:var(--success-line)}
+.i4-badge.st-atraso{background:var(--red-soft);color:var(--red);border-color:var(--error-line)}
 
-/* Botões secundários: borda e texto visíveis sem precisar passar o mouse. */
-:is(body[data-route="faturas"],body[data-route="contestacoes"],body[data-route="atendimento"]) .secondary{
-  background:#fff;color:var(--orange-dark);border:2px solid var(--orange)
-}
-:is(body[data-route="faturas"],body[data-route="contestacoes"],body[data-route="atendimento"]) .secondary:hover{
-  background:var(--orange);color:#fff
-}
-:is(body[data-route="faturas"],body[data-route="contestacoes"],body[data-route="atendimento"]) :is(button,.button):focus-visible{
-  outline:3px solid var(--i4-blue);outline-offset:2px
-}
-:is(body[data-route="faturas"],body[data-route="contestacoes"],body[data-route="atendimento"]) th{
-  color:#3f3a35;background:#f1ede8;font-weight:700
-}
-:is(body[data-route="faturas"],body[data-route="contestacoes"],body[data-route="atendimento"]) tbody tr:hover td{background:#fbf8f4}
-:is(body[data-route="faturas"],body[data-route="contestacoes"],body[data-route="atendimento"]) label{color:#3f3a35;font-weight:600}
-:is(body[data-route="faturas"],body[data-route="contestacoes"],body[data-route="atendimento"]) :is(input,select,textarea){border-color:#b9b1a8}
-:is(body[data-route="faturas"],body[data-route="contestacoes"],body[data-route="atendimento"]) :is(input,select,textarea):focus{border-color:var(--orange);outline:2px solid var(--orange-soft)}
-
-/* Selo de status */
-.i4-badge{display:inline-flex;align-items:center;gap:6px;border-radius:20px;padding:5px 11px 5px 9px;font-size:11.5px;font-weight:700;letter-spacing:.2px;white-space:nowrap;border:1.5px solid currentColor;line-height:1.2}
-.i4-badge:before{content:'';width:8px;height:8px;border-radius:50%;background:currentColor}
-.i4-badge.st-aberta{color:var(--i4-blue);background:var(--i4-blue-bg)}
-.i4-badge.st-fechada{color:var(--i4-amber);background:var(--i4-amber-bg)}
-.i4-badge.st-paga,.i4-badge.st-antecipada{color:var(--i4-green);background:var(--i4-green-bg)}
-.i4-badge.st-parcial{color:var(--i4-teal);background:var(--i4-teal-bg)}
-.i4-badge.st-atraso{color:#fff;background:var(--i4-red);border-color:var(--i4-red)}
-.i4-badge.st-atraso:before{background:#fff}
-.i4-badge.st-suspensa,.i4-badge.st-analise{color:var(--i4-violet);background:var(--i4-violet-bg)}
-.i4-badge.st-encerrada,.i4-badge.st-neutro{color:var(--i4-gray);background:var(--i4-gray-bg)}
-
-/* Barra acima das faturas + legenda */
 .i4-toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;margin:0 0 20px}
 .i4-legend{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
-
-/* Card da fatura: faixa lateral na cor do status */
-.card.i4-invoice{border-left:6px solid var(--i4-gray);padding-left:26px}
-.card.i4-invoice.st-aberta{border-left-color:var(--i4-blue)}
-.card.i4-invoice.st-fechada{border-left-color:var(--i4-amber-line)}
-.card.i4-invoice.st-paga{border-left-color:var(--i4-green)}
-.card.i4-invoice.st-parcial{border-left-color:var(--i4-teal)}
-.card.i4-invoice.st-atraso{border-left-color:var(--i4-red);background:#fffafa}
-.card.i4-invoice h2{font-size:20px;margin-bottom:12px}
 .i4-head{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
-.i4-hint{font-size:13px;color:#3f3a35;font-weight:500}
-.i4-dates{margin:10px 0 18px;color:#3f3a35}
+.i4-hint{font-size:12px;color:var(--muted)}
+.i4-dates{margin:10px 0 18px;color:var(--muted)}
 .i4-dates b{color:var(--ink)}
 
-/* Resumo de valores: "A pagar" é o número que manda */
 .i4-sums{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,1.3fr);gap:12px;margin-bottom:6px}
-.i4-sums>div{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:#fff}
-.i4-sums span{display:block;font-size:12px;color:#5c5752}
+.i4-sums>div{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--surface)}
+.i4-sums span{display:block;font-size:12px;color:var(--muted)}
 .i4-sums b{display:block;margin-top:4px;font-size:17px;color:var(--ink)}
-.i4-sums .i4-due{background:var(--orange-soft);border:2px solid var(--orange)}
-.i4-sums .i4-due span{color:var(--orange-dark);font-weight:700}
+.i4-sums .i4-due{background:var(--orange-soft);border-color:var(--warning-line)}
+.i4-sums .i4-due span{color:var(--orange-dark);font-weight:600}
 .i4-sums .i4-due b{font-size:24px;color:var(--orange-dark)}
-.st-paga .i4-sums .i4-due{background:var(--i4-green-bg);border-color:var(--i4-green)}
-.st-paga .i4-sums .i4-due :is(span,b){color:var(--i4-green)}
-.st-atraso .i4-sums .i4-due{background:var(--i4-red-bg);border-color:var(--i4-red)}
-.st-atraso .i4-sums .i4-due :is(span,b){color:var(--i4-red)}
+.st-paga .i4-sums .i4-due{background:var(--green-soft);border-color:var(--success-line)}
+.st-paga .i4-sums .i4-due :is(span,b){color:var(--green)}
+.st-atraso .i4-sums .i4-due{background:var(--red-soft);border-color:var(--error-line)}
+.st-atraso .i4-sums .i4-due :is(span,b){color:var(--red)}
+.st-aberta .i4-sums .i4-due{background:var(--background);border-color:var(--line)}
+.st-aberta .i4-sums .i4-due :is(span,b){color:var(--muted)}
 
-/* Ações por lançamento */
 .i4-row-actions{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
 .i4-row-actions small{width:100%}
-td .i4-btn-advance{background:var(--i4-blue);color:#fff;border:2px solid var(--i4-blue)}
-td .i4-btn-advance:hover{background:#174a96;border-color:#174a96}
-td .i4-btn-contest,.i4-btn-contest{background:#fff;color:var(--i4-red);border:2px solid var(--i4-red)}
-td .i4-btn-contest:hover,.i4-btn-contest:hover{background:var(--i4-red);color:#fff}
+.i4-btn-advance,.i4-btn-contest{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.i4-btn-advance:hover,.i4-btn-contest:hover{background:var(--background)}
 
-/* Bloco de pagamento / decisão */
-.i4-pay{margin-top:20px;padding:18px 20px;border-radius:12px;background:#fff8f2;border:2px dashed var(--orange)}
-.i4-pay h3{margin:0 0 14px;font-size:16px;color:var(--orange-dark)}
+.i4-pay{margin-top:20px;padding:18px 20px;border-radius:9px;background:var(--orange-soft);border:1px solid var(--warning-line)}
+.i4-pay h3{margin:0 0 14px;font-size:14px;color:var(--ink)}
 .i4-pay .actions{margin-top:4px}
-.i4-pay .primary{font-size:15px;padding:12px 22px}
-/* Campo de valor só aparece quando a forma é "Parcial" */
+/* Campo de valor só aparece quando a forma é "Parcial". Não alterar esta condição. */
 .i4-pay form:has(select[name="mode"]) label:has(input[name="value"]){display:none}
 .i4-pay form:has(select[name="mode"] option[value="PARCIAL"]:checked) label:has(input[name="value"]){display:flex}
 
-/* Histórico recolhível */
 .i4-history{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}
-.i4-history summary{color:var(--orange-dark);font-size:13px}
 .i4-history .table-wrap{margin-top:10px}
-
 @media(max-width:900px){.i4-sums{grid-template-columns:1fr 1fr}.i4-sums .i4-due{grid-column:1/-1}}
-@media(prefers-reduced-motion:no-preference){.i4-pay .primary,.i4-btn-contest,.i4-btn-advance,body[data-route] .secondary{transition:background .15s,color .15s}}
-/* Fatura aberta ainda não é cobrável: destaque neutro em vez de laranja */
-.st-aberta .i4-sums .i4-due{background:var(--i4-blue-bg);border:1px solid #b9cdf0}
-.st-aberta .i4-sums .i4-due :is(span,b){color:var(--i4-blue)}
-.st-aberta .i4-sums .i4-due span{font-weight:600}
-.st-aberta .i4-sums .i4-due b{font-size:19px}
-:is(body[data-route="faturas"],body[data-route="contestacoes"],body[data-route="atendimento"]) :is(input,select,textarea),label.check{font-weight:400}

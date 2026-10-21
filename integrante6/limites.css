@@ -1,7 +1,7 @@
 /* Integrante 6: apresentação restrita aos fluxos de limites e dados. */
-body[data-route="limites"] .i6-grid,body[data-route="dados"] .i6-grid,body[data-route="dados-editar"] .i6-grid,body[data-route="alterar-senha"] .i6-grid{align-items:start;margin-bottom:24px}
+body[data-route="limites"] .i6-grid,body[data-route="dados"] .i6-grid,body[data-route="dados-editar"] .i6-grid,body[data-route="alterar-senha"] .i6-grid{align-items:start;margin-bottom:20px}
 .i6-result-icon{width:54px;height:54px;border-radius:50%;background:var(--green-soft);color:var(--green);font-size:30px;margin:0 auto 18px;display:grid;place-items:center}
-.i6-home{margin-bottom:24px}
+.i6-home{margin-bottom:20px}
 body[data-route="limites"] .card>form{max-width:none}
 body[data-route="limites"] td,body[data-route="limites-historico"] td{overflow-wrap:anywhere}
 @media(max-width:1050px){body[data-route="limites"] .i6-grid{grid-template-columns:1fr}}

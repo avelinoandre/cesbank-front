@@ -107,6 +107,45 @@
       flash('Dados fictícios restaurados.');
     }, 'danger')), 'danger')}</div></details>`;
   }
+  /* Somente organização do menu: nenhuma rota ou permissão é modificada. */
+  function navigation(path) {
+    const sections = [
+      ['visao', 'Visão geral', ['inicio', 'notificacoes']],
+      ['pagamentos', 'Pagamentos e Pix', ['transferencia', 'boletos', 'agendamentos', 'favoritos', 'chaves']],
+      ['consultas', 'Extratos e histórico', ['extrato', 'operacoes']],
+      ['investimentos', 'Investimentos', ['investimentos']],
+      ['credito', 'Crédito e cartões', ['emprestimo', 'contratos', 'cartoes', 'faturas']],
+      ['conta', 'Minha conta', ['dados', 'limites', 'abrir-conta', 'encerrar-conta']],
+      ['suporte', 'Contestações', ['contestacoes']],
+      ['administracao', 'Área do analista', ['atendimento', 'admin-contas']],
+      ['demonstracao', 'Demonstração e perfis', ['perfis', 'sair', 'cenarios', 'validacao']]
+    ];
+    const parents = {
+      'comprovante':'operacoes', 'boleto-codigo':'boletos', 'boleto-confirmar':'boletos',
+      'boleto-agendar':'boletos', 'boleto-rejeitar':'boletos', 'boleto-recurso':'boletos', 'beneficiario':'boletos',
+      'consulta-pix':'chaves', 'reivindicacoes':'chaves',
+      'caixinhas':'investimentos', 'caixinha':'investimentos', 'aplicacao':'investimentos', 'gerenciar-investimentos':'investimentos',
+      'dados-editar':'dados', 'alterar-senha':'dados', 'limites-historico':'limites'
+    };
+    const active = parents[path] || (path.startsWith('cartao-') ? 'cartoes' : path);
+    const seen = new Set();
+    const entry = key => {
+      const route = C.routes[key];
+      if (!route?.group || seen.has(key)) return '';
+      seen.add(key);
+      return '<a href="#' + e(key) + '"' + (active === key ? ' class="active"' + (path === key ? ' aria-current="page"' : ' aria-current="location"') : '') + '>' + e(route.title) + '</a>';
+    };
+    const section = (id, title, keys) => {
+      const links = keys.map(entry).join('');
+      if (!links) return '';
+      if (id === 'visao') return '<div class="menu-overview"><span class="nav-group">' + e(title) + '</span>' + links + '</div>';
+      return '<details class="menu-section" data-menu-section="' + e(id) + '"' + (keys.includes(active) ? ' open' : '') + '><summary>' + e(title) + '</summary><div class="menu-links">' + links + '</div></details>';
+    };
+    const html = sections.map(([id,title,keys]) => section(id,title,keys)).join('');
+    // Novos módulos com entrada no menu continuam acessíveis sem atualizar esta lista.
+    const remaining = Object.keys(C.routes).filter(key => C.routes[key].group && !seen.has(key));
+    return html + section('outros', 'Outros serviços', remaining);
+  }
   function render() {
     handlers = {};
     close();
@@ -115,12 +154,7 @@
     const route = C.routes[current.path];
     const u = C.S.accounts.client(s, s.session.client);
     document.getElementById('identity').innerHTML = `<strong>${e(u.social || u.name)}</strong><small>${e(s.session.role)} · Agência 0001 · ${e(s.accounts.find(a => a.id === s.session.account).number)}</small>`;
-    let group = '';
-    document.getElementById('menu').innerHTML = Object.entries(C.routes).filter(([, r]) => r.group).map(([path, r]) => {
-      const head = r.group !== group ? `<small class="nav-group">${e(r.group)}</small>` : '';
-      group = r.group;
-      return head + `<a href="#${e(path)}" class="${current.path === path ? 'active' : ''}">${e(r.title)}</a>`;
-    }).join('');
+    document.getElementById('menu').innerHTML = navigation(current.path);
     document.getElementById('messages').innerHTML = '';
     if (notice?.path === location.hash) flash(notice.text, notice.type);else notice = null;
     try {
@@ -188,6 +222,7 @@
     history,
     link,
     render,
+    navigation,
     done(text) {
       close();
       C.UI.render();
