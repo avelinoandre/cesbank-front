@@ -60,7 +60,7 @@ O botão Executar verificações automáticas roda em estado isolado, sem gravar
 
 Os dois cadastros administrativos são categoria e produto oferecido, reunidos na mesma tela para simplificar o uso. O cliente acompanha suas posições em #aplicacao?id=... e pode simular resgate total ou parcial antes de confirmar. As condições contratadas são preservadas se um produto do catálogo for editado. Renda fixa recebe apuração diária conforme a regra do produto; ações acompanham a cotação atualizada pelo analista.
 
-### Caixinhas vinte telas e estados
+### Caixinhas: vinte telas e estados
 
 | Tela do documento | Implementação / como reproduzir |
 | --- | --- |
@@ -85,11 +85,36 @@ Os dois cadastros administrativos são categoria e produto oferecido, reunidos n
 | 19 Encerramento com sucesso | Confirmar e conferir resgate integral e banner. |
 | 20 Encerrada somente consulta | Preparar F13b RN10. Sem botões de movimentação. |
 
-### Limites oito telas e estados
+### Chaves Pix: vinte telas e estados
+
+| Tela do documento | Como reproduzir |
+| --- | --- |
+| 1 Início / acesso | #inicio → Chaves Pix. |
+| 2 Primeiro acesso vazio | Conta sem chaves, em #chaves. |
+| 3 Lista e nova chave | #chaves. |
+| 4 Chave aleatória | Tipo Chave aleatória; o valor é gerado pelo sistema (F1 RN1). |
+| 5 Formato inválido | Preparar F1 RN1; telefone sem +55. |
+| 6 Chave já vinculada | Preparar F1 RN3; e-mail já cadastrado. |
+| 7 CPF/CNPJ de outro titular | Preparar F1 RN4. |
+| 8 Limite de chaves atingido | Preparar F1 RN3 (5 chaves). |
+| 9 Confirmação com motivo | Cadastrar telefone ou e-mail válido. |
+| 10 Posse do contato por código | O código aparece na própria simulação. |
+| 11 Código inválido ou expirado | Código errado, ou avançar mais de 5 minutos. |
+| 12 Chave cadastrada | Confirmar o código. |
+| 13 Aleatória cadastrada | Concluir o cadastro da tela 4. |
+| 14 Solicitação repetida | Preparar F1 RN2. |
+| 15 Exclusão: confirmação | Excluir em uma chave (F1 RN7). |
+| 16 Chave excluída | Confirmar a exclusão. |
+| 17 Exclusão não permitida | Excluir chave de conta da qual não é titular. |
+| 18 Histórico de excluídas | Ver histórico de chaves excluídas. |
+| 19 Consulta de terceiro | #consulta-pix (F1 RN9). |
+| 20 Chave não encontrada | Preparar F1 RN5. |
+
+### Limites: oito telas e estados
 
 #inicio/#limites; vigentes e histórico; erro de teto (RN2); erro noturno (RN5); modal de segundo fator (RN6); código inválido/expirado; redução aplicada (RN3); aumento em carência e vigência após 24h (RN4).
 
-### Dados e senha dez telas e estados
+### Dados e senha: dez telas e estados
 
 #inicio/#dados; dados imutáveis/contatos atuais; formulários de alteração; senha atual incorreta e confirmação divergente; senha fora da política; reuso recente; sucesso com hash/sal; modal de confirmação do contato; código inválido/expirado; contato atualizado e auditoria.
 
