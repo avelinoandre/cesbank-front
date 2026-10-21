@@ -413,6 +413,7 @@
         };
       }
       if (feature === 'F6') {
+        route=n<=4?'alterar-senha':n===6?'dados':'dados-editar';
         fields = {
           current: 'Cesbank9!',
           password: 'Forte9!Z7',
@@ -423,7 +424,7 @@
           2: 'Nova senha com sequência simples preenchida. A política deve recusar.',
           3: 'Nova senha igual à atual preenchida. O histórico deve impedir o reuso.',
           4: 'Altere a senha e confira apenas hash SHA-256 e sal na demonstração, sem texto claro no cadastro.',
-          5: 'Solicite novo e-mail/telefone. O código aparece na simulação; só após confirmá-lo o contato muda.',
+          5: 'Altere telefone ou e-mail e use Salvar e confirmar. Cada contato novo exige seu código; os contatos anteriores ficam válidos até a confirmação.',
           6: 'CPF, nascimento e nome civil estão desabilitados. Use Solicitar correção para enviar nova documentação fictícia.',
           7: 'Altere senha ou confirme novo contato e confira canal, data/hora e valor anterior mascarado na auditoria.'
         };
@@ -448,7 +449,8 @@
         } : n === 3 ? {
           daily: '9000.00'
         } : n === 5 ? {
-          night: '6000.00'
+          per: '2000.00',
+          night: '3000.00'
         } : {
           daily: '11000.00'
         };

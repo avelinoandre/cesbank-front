@@ -1,3 +1,5 @@
-/* integrante6 · dados-senha · apresentação das telas e RNs do módulo. */
-body[data-route="dados"] .card>form{max-width:980px}
-body[data-route="dados"] .table-wrap{margin-top:16px}
+/* Integrante 6 · dados cadastrais e senha · telas do documento v2. */
+body[data-route="dados"] input:disabled{background:var(--background);cursor:not-allowed}
+body[data-route="dados-editar"] .grid .card,body[data-route="alterar-senha"] .grid .card{height:auto}
+body[data-route="dados-editar"] .card p,body[data-route="alterar-senha"] .card p{font-size:12px}
+body[data-route="dados-editar"] .grid+section,body[data-route="alterar-senha"] .grid+section{margin-top:24px}

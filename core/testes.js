@@ -509,8 +509,7 @@
     });
     test('Segundo fator, redução imediata e histórico', ['F7 RN3', 'F7 RN6', 'F7 RN7'], s => {
       const v = limitValues(s),
-        otp = C.Security.otp(s, 'LIMITES', '+5581999998888');
-      otp.payload = v;
+        otp = S.limits.begin(s, v);
       throws(() => S.limits.request(s, v, otp.id, '000000'));
       S.limits.request(s, v, otp.id, otp.code);
       eq(s.accounts[0].limits.daily, 900000);
@@ -523,8 +522,7 @@
             ...s.accounts[0].limits,
             daily: 1100000
           },
-          otp = C.Security.otp(s, 'LIMITES', '+5581999998888');
-        otp.payload = v;
+          otp = S.limits.begin(s, v);
         S.limits.request(s, v, otp.id, otp.code);
       });
       K.advance('2025-02-04T12:00:00Z');
